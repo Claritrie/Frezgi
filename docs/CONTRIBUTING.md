@@ -66,6 +66,7 @@ Since Frezgi is a static Vue.js application:
 - run the dev server while watching for changes for `npm run dev`
 - run tests with `npm run test`
 
+> Note: A _run_tests.sh has been provided to automate this setup but that's up to you. If you don't care about your current envs, use `echo -e "y\ny" | sh _run_tests.sh` (answering yes to both prompts) **at your own risk**.
 
 ### File Structure
 ```
