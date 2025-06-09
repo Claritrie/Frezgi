@@ -12,7 +12,7 @@
 
 Frezgi is a visual argument mapping tool that helps you map out complex arguments and decisions using an intuitive, interactive interface. Create argument tries with supporting, opposing, and exploring nodes to better understand problems and make informed choices.
 
-![Preview](https://i.imgur.com/HvKWKdY.jpeg)
+![Preview](https://i.imgur.com/AEZWuXw.png)
 
 ### ✨ Features
 
