@@ -6,7 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "playwright test"
+    "test": "playwright test",
+    "prebuild": "playwright test",
+    "postinstall": "npx playwright install-deps",
     "playwright-setup": "npx playwright install-deps"
   },
   "dependencies": {
