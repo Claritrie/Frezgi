@@ -7,7 +7,11 @@ async function isArgumentElementVisible(page, argumentText: String): Promise<boo
 
 test.describe('Can add arguments', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://frezgi.com/');
+    await page.goto('/');
+  });
+
+  test.afterAll(({ browser }) => {
+    browser.close();
   });
 
   test('should add a positive argument', async ({ page }) => {
@@ -38,9 +42,3 @@ test.describe('Can add arguments', () => {
     expect(isVisible).toBe(true);
   });
 });
-
-
-// test('Should meet performance metrics', async ({ page }) => {
-//   // run a lighthouse scan??
-//   expect(true).toBe(true)
-// })
