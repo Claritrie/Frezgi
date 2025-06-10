@@ -98,7 +98,7 @@ echo "Running Playwright tests..."
 npm run test
 TEST_EXIT_CODE=$?
 
-# I didn't need 'wait $DEV_PID' here, Playwright tests have their own lifecycle and would complete, Vite server is meant to stay alive for them >_<
+# Note: Don't need 'wait' here, Playwright tests have their own lifecycle and would complete, Vite server is meant to stay alive for them.
 
 echo "Stopping Vite development server gracefully..."
 kill -15 $DEV_PID
