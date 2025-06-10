@@ -7,7 +7,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "playwright test",
-    "mac-arm:setup": "npm i @rollup/rollup-darwin-arm64",
+    "mac-arm:setup": "npm i @rollup/rollup-darwin-arm64 --no-save",
     "postinstall": "npx playwright install-deps",
     "playwright-setup": "npx playwright install-deps"
   },

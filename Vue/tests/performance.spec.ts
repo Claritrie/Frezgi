@@ -35,7 +35,7 @@ test.describe('Initial Page Load', () => {
         formats: {
           html: true, //defaults to false
         },
-        name: `ligthouse-${new Date().toISOString()}`, //defaults to `lighthouse-${new Date().getTime()}`
+        name: `lighthouse-${new Date().toISOString()}`, //defaults to `lighthouse-${new Date().getTime()}`
         directory: `${process.cwd()}/lighthouse`, //defaults to `${process.cwd()}/lighthouse`
       },
     });

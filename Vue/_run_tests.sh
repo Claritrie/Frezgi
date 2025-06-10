@@ -62,15 +62,19 @@ fi
 echo "Loading environment variables..."
 source .env
 
-# Ensure dependencies are installed
-echo "Installing dependencies..."
-rm -rf node_modules package-lock.json
-npm install
+# Ensure dependencies are installed using npm ci
+echo "Installing dependencies with npm ci..."
+npm ci
 
-# Install Playwright and its dependencies
-echo "Installing Playwright browsers..."
-npx playwright install
-npx playwright install-deps
+# macOS (Darwin) Apple Silicon specific setup
+if [ "$OS" = "Darwin" ]; then
+  echo "Detected macOS. Running Apple Silicon setup if required..."
+  npm run mac-arm:setup
+fi
+
+# Install Playwright system-specific dependencies
+echo "Installing Playwright system dependencies..."
+npm run playwright-setup
 
 # Start the Vite development server
 echo "Starting the Vite development server..."
@@ -94,24 +98,24 @@ echo "Running Playwright tests..."
 npm run test
 TEST_EXIT_CODE=$?
 
-# Ensure Playwright processes close properly
-echo "Waiting for Playwright tests to finish..."
-wait $DEV_PID
+# I didn't need 'wait $DEV_PID' here, Playwright tests have their own lifecycle and would complete, Vite server is meant to stay alive for them >_<
 
-# Stop the Vite development server gracefully
-echo "Stopping the Vite development server..."
-kill -15 $DEV_PID  # Graceful shutdown
-sleep 2  # Allow time for cleanup
+echo "Stopping Vite development server gracefully..."
+kill -15 $DEV_PID
+sleep 2  # Time for cleanup
 
-# Verify if the process is still running
+# Wait for DEV_PID if we want to ensure it's truly gone, ensures `kill` command has had time to work before checking or force-killing.
+wait $DEV_PID 2>/dev/null # Add 2>/dev/null to suppress "wait: no such process" if it's already gone
+
+# Verify if process is still running
 if ps -p $DEV_PID > /dev/null; then
   echo "Vite server (PID: $DEV_PID) is still running. Trying a more forceful shutdown..."
-  kill -9 $DEV_PID  # Force kill if it didn't terminate gracefully
+  kill -9 $DEV_PID  # Force kill if didn't terminate gracefully
 else
   echo "Vite server (PID: $DEV_PID) has been successfully terminated."
 fi
 
-# Capture **UTC Date & Time**
+# Capture UTC Date & Time
 CURRENT_DATE_UTC=$(date -u +"%A, %d %B %Y")
 CURRENT_TIME_UTC=$(date -u +"%H:%M:%S UTC")
 
