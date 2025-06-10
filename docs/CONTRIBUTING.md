@@ -60,7 +60,7 @@ Since Frezgi is a static Vue.js application:
 
 ### Developer Setup
 
-- install dependencies `npm ci`
+- install dependencies `npm ci` **NB** If you have a Macbook with the M Chip set please run the following script after installation `npm run mac-arm:setup`,
 - install system specific libraries for playwright with `npm run playwright-setup`
 - create an `.env` in the `Vue` directory and copy the values from .env.template. You can use `https://www.frezgi.com` as the URL if you wish
 - run the dev server while watching for changes for `npm run dev`

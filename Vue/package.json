@@ -7,8 +7,8 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "playwright test",
-    "prebuild": "playwright test",
-    "postinstall": "npx playwright install-deps && npm install @rollup/rollup-darwin-arm64",
+    "mac-arm:setup": "npm i @rollup/rollup-darwin-arm64",
+    "postinstall": "npx playwright install-deps",
     "playwright-setup": "npx playwright install-deps"
   },
   "dependencies": {
@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
-    "@rollup/rollup-darwin-arm64": "^4.42.0",
     "@types/node": "^22.15.30",
     "@vitejs/plugin-vue": "^5.2.3",
     "dotenv": "^16.5.0",
