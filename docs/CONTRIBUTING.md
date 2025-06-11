@@ -31,6 +31,8 @@ This project adheres to a Code of Conduct. By participating, you are expected to
 - A modern web browser
 - A text editor or IDE
 - Git for version control
+- Node LTS v22.16.0
+
 
 ### Local Development
 Since Frezgi is a static Vue.js application:
@@ -45,15 +47,26 @@ Since Frezgi is a static Vue.js application:
    ```bash
    # Python 3
    python -m http.server 8000
-   
+
    # Node.js
    npx http-server
-   
+
    # PHP
    php -S localhost:8000
    ```
 
 3. Navigate to `http://localhost:8000` to see the application
+
+
+### Developer Setup
+
+- install dependencies `npm ci` **NB** If you have a Macbook with the M Chip set please run the following script after installation `npm run mac-arm:setup`,
+- install system specific libraries for playwright with `npm run playwright-setup`
+- create an `.env` in the `Vue` directory and copy the values from .env.template. You can use `https://www.frezgi.com` as the URL if you wish
+- run the dev server while watching for changes for `npm run dev`
+- run tests with `npm run test`
+
+> Note: A _run_tests.sh has been provided to automate this setup but that's up to you. If you don't care about your current envs, use `echo -e "y\ny" | sh _run_tests.sh` (answering yes to both prompts) **at your own risk**.
 
 ### File Structure
 ```

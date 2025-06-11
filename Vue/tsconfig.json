@@ -2,13 +2,15 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
-    "jsx": "Preserve",
+    "jsx": "preserve",
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "vueCompilerOptions": {
     "target": 3.4
-  }
+  },
+  "exclude": ["node_modules"]
 }
