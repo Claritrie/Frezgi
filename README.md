@@ -12,7 +12,7 @@
 
 Frezgi is a visual argument mapping tool that helps you map out complex arguments and decisions using an intuitive, interactive interface. Create argument tries with supporting, opposing, and exploring nodes to better understand problems and make informed choices.
 
-![Preview](https://i.imgur.com/HvKWKdY.jpeg)
+![Preview](https://i.imgur.com/AEZWuXw.png)
 
 ### ✨ Features
 
@@ -111,10 +111,11 @@ We welcome contributions from developers of all skill levels! Whether you're fix
 
 ## 📋 Roadmap
 
-- [ ] Toggle stance label names on lines
 - [ ] Export to PNG
 - [ ] Export to JSON/TRIE (rename as .trie file)
 - [ ] Import from JSON/TRIE
+- [ ] Toggling/Draggable Floating Legend (Show user color-to-stance correlations)
+- [ ] Toggle stance label names per line (because/but/however or Supporting/Opposing/Exploring, none, etc...)
 - [ ] Local Storage (Preserve your arguments with browser storage)
 - [ ] Undo/Redo functionality
 - [ ] Offline web-app (Tauri port)

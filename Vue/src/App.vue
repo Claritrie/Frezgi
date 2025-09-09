@@ -4,7 +4,7 @@
     <div class="color-settings-panel" :class="{ 'hidden': !showColorPanel }">
       <!-- Logo at top -->
       <div class="panel-logo">
-        <img src="https://i.imgur.com/sFfSldJ.png" alt="Frezgi Logo" class="company-logo">
+        <img src="https://imgur.com/dlnsBR8.png" alt="Frezgi Logo" class="company-logo">
       </div>
       
       <div class="color-picker-container">
@@ -125,9 +125,15 @@
             placeholder="Type your claim here..."
             ref="newNodeInput"
             @keydown.enter="addChildNode"
+            @keydown.escape="closePopup"
           />
         </label>
+        <div class="popup-buttons">
+          <button @click="addChildNode" class="popup-btn confirm-btn">Add</button>
+          <button @click="closePopup" class="popup-btn cancel-btn">Cancel</button>
+        </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -487,6 +493,13 @@ export default {
 
     closePopup() {
       this.showPopup = false;
+      // Reset the newNode data
+      this.newNode = { type: "", text: "", color: "", parent: null };
+      
+      // Remove focus from any active input
+      if (this.$refs.newNodeInput) {
+        this.$refs.newNodeInput.blur();
+      }
     },
 
     addChildNode() {
@@ -778,4 +791,69 @@ input {
 .toggle-panel-btn.panel-open {
   left: 210px;
 }
+
+
+
+/* Additional styles for popup buttons */
+.popup-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.popup-btn {
+  padding: 12px 24px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.confirm-btn {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.confirm-btn:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.cancel-btn {
+  background-color: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.cancel-btn:hover {
+  background-color: #4b5563;
+  border-color: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Ensure popup input styling */
+.popup input {
+  margin: 15px 0 10px 0;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.popup input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+
 </style>
