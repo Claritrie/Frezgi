@@ -124,10 +124,10 @@ We use **GitHub Flow** - a simple, branch-based workflow that's perfect for open
 
 #### Branch Protection
 - `main` branch is protected and always deployable
-- **Only project admins/maintainers can commit directly to `main`**
 - **All contributors must use Pull Requests** - no exceptions
-- At least one review required before merging
+- **Only project admins/maintainers can commit directly to `main`**
 - No direct pushes to `main` allowed for contributors
+- At least one review required before merging
 - Automated checks must pass before merging
 
 ### Types of Contributions
@@ -240,7 +240,7 @@ Contributors will be:
 
 ## License
 
-By contributing to Frezgi, you agree that your contributions will be licensed under the same GPL 3.0 License that covers the project.
+By contributing to Frezgi, you agree that your contributions will be licensed under the same MIT License that covers the project.
 
 ---
 
