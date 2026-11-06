@@ -94,7 +94,7 @@
       <!-- Child Nodes -->
       <div
         v-for="(node, index) in childNodes"
-        :key="index"
+        :key="node.id"
         :class="`node ${node.type}`"
         :style="{ 
           top: node.position.y + 'px', 
@@ -199,7 +199,7 @@ export default {
     // Load saved color scheme if available
     this.loadColorScheme();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     document.removeEventListener('mousemove', this.handleMouseMove);
     if (this.autoHideTimeout) {
       clearTimeout(this.autoHideTimeout);
@@ -224,7 +224,7 @@ export default {
           this.autoHideTimeout = setTimeout(() => {
             this.showColorPanel = false;
             this.autoHideTimeout = null;
-          }, 100); // 1 second before hiding
+          }, 100); // 100 ms before hiding
         }
       }
     },
