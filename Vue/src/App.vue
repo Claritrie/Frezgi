@@ -56,6 +56,46 @@
       {{ showColorPanel ? '◀' : '▶' }}
     </button>
 
+    <!-- Help Button (reopens the welcome guide) -->
+    <button
+      @click="openGuide"
+      class="help-btn"
+      aria-label="Open the guide"
+      title="What is Frezgi and how do I use it?"
+    >?</button>
+
+    <!-- Welcome Guide -->
+    <div v-if="showGuide" class="guide-backdrop" @click.self="closeGuide">
+      <div class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+        <h2 id="guide-title">Welcome to Frezgi</h2>
+        <p class="guide-intro">
+          Frezgi helps you think a statement through. You write the statement,
+          then map the reasons that support it, the reasons that oppose it,
+          and the points that need more thought.
+        </p>
+
+        <h3>How it helps</h3>
+        <ul>
+          <li>You see every side of an issue in one place.</li>
+          <li>Each reason has its own box, so you can judge it on its own.</li>
+          <li>You find weak points and open questions before you decide.</li>
+        </ul>
+
+        <h3>How to use it</h3>
+        <ol>
+          <li>Double-click <strong>Main Resolution</strong> and write the statement you want to examine.</li>
+          <li>Hover over any box and choose 👍 to support it, 👎 to oppose it, or ✋ to explore it further.</li>
+          <li>Drag the boxes to arrange your map.</li>
+          <li>To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
+          <li>Move your pointer to the left edge of the screen to change the colours.</li>
+        </ol>
+
+        <p class="guide-note">Note: your map is not saved when you close or reload the page.</p>
+
+        <button ref="guideStartBtn" @click="closeGuide" class="popup-btn confirm-btn">Start mapping</button>
+      </div>
+    </div>
+
     <div ref="canvas" class="canvas" :style="{ backgroundColor: canvasColor }">
       <!-- SVG Lines -->
       <svg class="lines">
@@ -190,22 +230,60 @@ export default {
       refreshTrigger: 0,
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
+      showGuide: false,
     };
   },
   mounted() {
     // Auto-hide functionality
     document.addEventListener('mousemove', this.handleMouseMove);
-    
+    document.addEventListener('keydown', this.handleGuideKeydown);
+
     // Load saved color scheme if available
     this.loadColorScheme();
+
+    // Show the welcome guide on the first visit only
+    let guideSeen = false;
+    try {
+      guideSeen = localStorage.getItem('guide-seen') === 'true';
+    } catch (error) {
+      // Storage may be blocked; show the guide in that case
+    }
+    if (!guideSeen) {
+      this.openGuide();
+    }
   },
   beforeUnmount() {
     document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('keydown', this.handleGuideKeydown);
     if (this.autoHideTimeout) {
       clearTimeout(this.autoHideTimeout);
     }
   },
   methods: {
+    openGuide() {
+      this.showGuide = true;
+      this.$nextTick(() => {
+        if (this.$refs.guideStartBtn) {
+          this.$refs.guideStartBtn.focus();
+        }
+      });
+    },
+
+    closeGuide() {
+      this.showGuide = false;
+      try {
+        localStorage.setItem('guide-seen', 'true');
+      } catch (error) {
+        console.error('Failed to save guide state:', error);
+      }
+    },
+
+    handleGuideKeydown(event) {
+      if (this.showGuide && event.key === 'Escape') {
+        this.closeGuide();
+      }
+    },
+
     handleMouseMove(event) {
       // Show panel when mouse is close to the left edge
       const triggerZone = 50; // pixels from left edge
@@ -853,6 +931,93 @@ input {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Help button */
+.help-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  margin: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(60, 60, 60, 0.8);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 99;
+  transition: background-color 0.2s;
+}
+
+.help-btn:hover,
+.help-btn:focus-visible {
+  background-color: #2563eb;
+}
+
+/* Welcome guide */
+.guide-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 200;
+}
+
+.guide {
+  background: white;
+  color: #1f2937;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.guide h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.guide h3 {
+  margin: 18px 0 6px;
+  font-size: 16px;
+}
+
+.guide ul,
+.guide ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.guide li {
+  margin-bottom: 4px;
+}
+
+.guide-intro {
+  margin: 0;
+}
+
+.guide-note {
+  margin: 16px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.guide .confirm-btn {
+  display: block;
+  margin: 0 auto;
 }
 
 
