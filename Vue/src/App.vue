@@ -29,7 +29,7 @@
                 :id="`bg-${type}`"
                 type="color"
                 v-model="nodeColors[type]"
-                @change="updateEdgeColors()"
+                @change="ensureReadableText(type); updateEdgeColors()"
                 class="color-input"
                 :title="getNodeTypeLabel(type) + ' background'"
               />
@@ -37,6 +37,7 @@
                 :id="`text-${type}`"
                 type="color"
                 v-model="textColors[type]"
+                @change="ensureReadableText(type); saveColorScheme()"
                 class="color-input"
                 :title="getNodeTypeLabel(type) + ' text'"
               />
@@ -338,7 +339,12 @@ export default {
               this.textColors[type] = colorScheme.textColors[type];
             }
           }
-          
+
+          // Correct any saved text colour that cannot be read on its node
+          for (const type in this.textColors) {
+            this.ensureReadableText(type);
+          }
+
           // Update edge colors
           this.updateEdgeColors();
         }
@@ -347,6 +353,41 @@ export default {
       }
     },
     
+    // Relative luminance of a "#RRGGBB" colour (WCAG 2 formula)
+    getLuminance(hex) {
+      const value = parseInt(String(hex).replace('#', ''), 16);
+      if (Number.isNaN(value)) {
+        return null;
+      }
+      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map(c => {
+        const s = c / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    },
+
+    getContrastRatio(hexA, hexB) {
+      const a = this.getLuminance(hexA);
+      const b = this.getLuminance(hexB);
+      if (a === null || b === null) {
+        return null;
+      }
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    },
+
+    // If a node's text colour is too close to its background colour,
+    // replace it with black or white, whichever is easier to read.
+    ensureReadableText(type) {
+      const background = this.nodeColors[type];
+      const ratio = this.getContrastRatio(background, this.textColors[type]);
+      if (ratio !== null && ratio >= 3) {
+        return;
+      }
+      const onBlack = this.getContrastRatio(background, '#000000') || 0;
+      const onWhite = this.getContrastRatio(background, '#FFFFFF') || 0;
+      this.textColors[type] = onBlack >= onWhite ? '#000000' : '#FFFFFF';
+    },
+
     resetColorScheme() {
       // Reset to default colors
       this.canvasColor = this.defaultColors.canvas;
