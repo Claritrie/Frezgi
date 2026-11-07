@@ -49,7 +49,7 @@
       </div>
       
       <!-- Version at bottom -->
-      <div class="version-info">v0.0.10</div>
+      <div class="version-info">v0.1.0</div>
     </div>
     
     <!-- Toggle Button for Color Panel -->
