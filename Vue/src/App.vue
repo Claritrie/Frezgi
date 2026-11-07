@@ -65,6 +65,22 @@
       title="What is Frezgi and how do I use it?"
     >?</button>
 
+    <!-- Legend: what each node type means -->
+    <aside class="legend" :class="{ collapsed: legendCollapsed }" aria-label="Key">
+      <button
+        type="button"
+        class="legend-toggle"
+        :aria-expanded="String(!legendCollapsed)"
+        @click="toggleLegend"
+      >Key {{ legendCollapsed ? '▴' : '▾' }}</button>
+      <ul v-if="!legendCollapsed">
+        <li v-for="item in legendItems" :key="item.type">
+          <span class="legend-swatch" :style="{ backgroundColor: nodeColors[item.type] }"></span>
+          <span><strong>{{ item.name }}</strong>: {{ item.meaning }}</span>
+        </li>
+      </ul>
+    </aside>
+
     <!-- Welcome Guide -->
     <div v-if="showGuide" class="guide-backdrop" @click.self="closeGuide">
       <div class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
@@ -170,6 +186,20 @@
         </div>
       </div>
 
+      <!-- First-step hint, shown until the first point is added -->
+      <p
+        v-if="childNodes.length === 0 && !showGuide"
+        class="empty-hint"
+        :style="{
+          top: resolutionNode.position.y + nodeWithEmojiHeight + 12 + 'px',
+          left: resolutionNode.position.x - 55 + 'px',
+          color: hintColor
+        }"
+      >
+        Hover over the box above to add your first point.<br />
+        Double-click any box to edit its text.
+      </p>
+
       <!-- Popup for Statement -->
       <div v-if="showPopup" class="popup">
         <label>
@@ -246,6 +276,13 @@ export default {
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
       showGuide: false,
+      legendCollapsed: false,
+      legendItems: [
+        { type: "resolution", name: "Resolution", meaning: "the statement you are examining" },
+        { type: "pro", name: "Supporting", meaning: "a reason for the point it is linked to" },
+        { type: "con", name: "Opposing", meaning: "a reason against the point it is linked to" },
+        { type: "exp", name: "Exploring", meaning: "a point that needs more thought or evidence" },
+      ],
       // Buttons shown when the pointer is over a node
       nodeActions: [
         { type: "pro", emoji: "👍", label: "Add a supporting reason" },
@@ -254,6 +291,15 @@ export default {
       ],
     };
   },
+  computed: {
+    // Hint text colour that stays readable on the current canvas colour
+    hintColor() {
+      const luminance = this.getLuminance(this.canvasColor);
+      return luminance !== null && luminance > 0.4
+        ? 'rgba(0, 0, 0, 0.6)'
+        : 'rgba(255, 255, 255, 0.7)';
+    },
+  },
   mounted() {
     // Auto-hide functionality
     document.addEventListener('mousemove', this.handleMouseMove);
@@ -261,6 +307,12 @@ export default {
 
     // Load saved color scheme if available
     this.loadColorScheme();
+
+    try {
+      this.legendCollapsed = localStorage.getItem('legend-collapsed') === 'true';
+    } catch (error) {
+      // Storage may be blocked; keep the legend open
+    }
 
     // Show the welcome guide on the first visit only
     let guideSeen = false;
@@ -296,6 +348,15 @@ export default {
         localStorage.setItem('guide-seen', 'true');
       } catch (error) {
         console.error('Failed to save guide state:', error);
+      }
+    },
+
+    toggleLegend() {
+      this.legendCollapsed = !this.legendCollapsed;
+      try {
+        localStorage.setItem('legend-collapsed', String(this.legendCollapsed));
+      } catch (error) {
+        console.error('Failed to save legend state:', error);
       }
     },
 
@@ -1062,6 +1123,82 @@ input {
 .help-btn:hover,
 .help-btn:focus-visible {
   background-color: #2563eb;
+}
+
+/* First-step hint */
+.empty-hint {
+  position: absolute;
+  width: 260px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+/* Legend */
+.legend {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  max-width: calc(100vw - 24px);
+  width: 290px;
+  box-sizing: border-box;
+  padding: 8px 12px 10px;
+  border-radius: 8px;
+  background-color: rgba(40, 40, 40, 0.9);
+  color: white;
+  font-size: 13px;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 98;
+}
+
+.legend.collapsed {
+  width: auto;
+  padding: 4px 8px;
+}
+
+.legend-toggle {
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: #ccc;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.legend-toggle:hover,
+.legend-toggle:focus-visible {
+  color: white;
+}
+
+.legend ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.legend-swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Welcome guide */
