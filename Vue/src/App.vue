@@ -126,9 +126,16 @@
       >
         {{ resolutionNode.text }}
         <div v-if="resolutionNode.showEmojis" class="emoji-menu">
-          <span @click="openPopup('pro', resolutionNode)">👍</span>
-          <span @click="openPopup('con', resolutionNode)">👎</span>
-          <span @click="openPopup('exp', resolutionNode)">✋</span>
+          <button
+            v-for="action in nodeActions"
+            :key="action.type"
+            type="button"
+            class="emoji-btn"
+            :aria-label="action.label"
+            :data-tip="action.label"
+            @mousedown.stop
+            @click="openPopup(action.type, resolutionNode)"
+          >{{ action.emoji }}</button>
         </div>
       </div>
 
@@ -150,9 +157,16 @@
       >
         {{ node.text }}
         <div v-if="node.showEmojis" class="emoji-menu">
-          <span @click="openPopup('pro', node)">👍</span>
-          <span @click="openPopup('con', node)">👎</span>
-          <span @click="openPopup('exp', node)">✋</span>
+          <button
+            v-for="action in nodeActions"
+            :key="action.type"
+            type="button"
+            class="emoji-btn"
+            :aria-label="action.label"
+            :data-tip="action.label"
+            @mousedown.stop
+            @click="openPopup(action.type, node)"
+          >{{ action.emoji }}</button>
         </div>
       </div>
 
@@ -232,6 +246,12 @@ export default {
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
       showGuide: false,
+      // Buttons shown when the pointer is over a node
+      nodeActions: [
+        { type: "pro", emoji: "👍", label: "Add a supporting reason" },
+        { type: "con", emoji: "👎", label: "Add an opposing reason" },
+        { type: "exp", emoji: "✋", label: "Add a point to explore" },
+      ],
     };
   },
   mounted() {
@@ -721,6 +741,51 @@ export default {
   margin-top: 10px;
   display: flex;
   justify-content: space-around;
+}
+
+.emoji-btn {
+  position: relative;
+  margin: 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.emoji-btn:hover,
+.emoji-btn:focus-visible {
+  background-color: rgba(0, 0, 0, 0.15);
+  transform: scale(1.15);
+  outline: none;
+}
+
+/* Tooltip that names the action */
+.emoji-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #1f2937;
+  color: white;
+  font-size: 12px;
+  font-weight: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 20;
+}
+
+.emoji-btn:hover::after,
+.emoji-btn:focus-visible::after {
+  opacity: 1;
 }
 
 .lines {
