@@ -60,13 +60,13 @@ Since Frezgi is a static Vue.js application:
 
 ### Developer Setup
 
-- install dependencies `npm ci` **NB** If you have a Macbook with the M Chip set please run the following script after installation `npm run mac-arm:setup`,
-- install system specific libraries for playwright with `npm run playwright-setup`
-- create an `.env` in the `Vue` directory and copy the values from .env.template. You can use `https://www.frezgi.com` as the URL if you wish
-- run the dev server while watching for changes for `npm run dev`
-- run tests with `npm run test`
+All commands run in the `Vue` directory.
 
-> Note: A _run_tests.sh has been provided to automate this setup but that's up to you. If you don't care about your current envs, use `echo -e "y\ny" | sh _run_tests.sh` (answering yes to both prompts) **at your own risk**.
+- Install dependencies with `npm ci`. **NB:** on a Mac with an Apple silicon (M) chip, also run `npm run mac-arm:setup` after installation.
+- Install the browsers for the tests with `npm run test:setup`.
+- Run the dev server, which reloads on changes, with `npm run dev`.
+- Run the tests with `npm test`. Playwright starts the dev server by itself, or uses one that is already running.
+- To run the tests against another address, such as the live site, set `PLAYWRIGHT_BASE_URL` in a `.env` file (see `.env.template`).
 
 ### File Structure
 ```

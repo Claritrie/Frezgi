@@ -3,3 +3,6 @@ Vue/node_modules/
 
 # Distributable folder
 dist
+
+# macOS
+.DS_Store
