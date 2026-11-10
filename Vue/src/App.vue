@@ -499,10 +499,14 @@ export default {
     );
 
     try {
-      this.legendCollapsed = localStorage.getItem('legend-collapsed') === 'true';
+      const savedLegend = localStorage.getItem('legend-collapsed');
+      this.legendCollapsed = savedLegend !== null
+        ? savedLegend === 'true'
+        : this.isNarrowScreen();
       this.tutorialDone = localStorage.getItem('tutorial-done') === 'true';
     } catch (error) {
-      // Storage may be blocked; keep the legend open
+      // Storage may be blocked; use the default for this screen width
+      this.legendCollapsed = this.isNarrowScreen();
     }
 
     // Show the welcome guide on the first visit only
@@ -551,6 +555,11 @@ export default {
       } catch (error) {
         console.error('Failed to save guide state:', error);
       }
+    },
+
+    // On phones the open Key would cover the map, so it starts collapsed there
+    isNarrowScreen() {
+      return window.innerWidth < 600;
     },
 
     finishTutorial() {
@@ -1600,7 +1609,7 @@ input {
 
 /* First-step hint */
 /* Step-by-step tips */
-/* Bottom left, away from the main box; above the Key on narrow screens */
+/* Bottom left, away from the main box */
 .coach {
   position: fixed;
   left: 16px;
@@ -1617,6 +1626,13 @@ input {
   line-height: 1.45;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   z-index: 99;
+}
+
+/* On phones, sit above the collapsed Key instead of covering it */
+@media (max-width: 599px) {
+  .coach {
+    bottom: 56px;
+  }
 }
 
 .coach-title {
