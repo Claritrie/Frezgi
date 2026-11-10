@@ -7,6 +7,8 @@ async function isArgumentElementVisible(page, argumentText: String): Promise<boo
 
 test.describe('Can add arguments', () => {
   test.beforeEach(async ({ page }) => {
+    // Skip the first-visit welcome guide so the canvas is usable
+    await page.addInitScript(() => localStorage.setItem('guide-seen', 'true'));
     await page.goto('/');
   });
 
