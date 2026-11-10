@@ -131,6 +131,7 @@
       <!-- Main Resolution Node -->
       <div
         class="node resolution-node"
+        :data-node-id="resolutionNode.id"
         :class="{ 'drop-target': pendingDelete && pendingDelete.parentId === resolutionNode.id }"
         :style="{ 
           top: resolutionNode.position.y + 'px', 
@@ -162,6 +163,7 @@
       <div
         v-for="(node, index) in childNodes"
         :key="node.id"
+        :data-node-id="node.id"
         :class="[`node ${node.type}`, {
           dragging: draggingNode === node,
           'will-delete': isPendingDelete(node.id),
@@ -830,10 +832,7 @@ export default {
         id,
         text: this.newNode.text.trim(),
         type: this.newNode.type,
-        position: {
-          x: this.newNode.parent.position.x + 50,
-          y: this.newNode.parent.position.y + 150
-        },
+        position: this.findFreePosition(this.newNode.parent),
         showEmojis: false
       };
 
@@ -848,6 +847,64 @@ export default {
       });
 
       this.closePopup();
+    },
+
+    // Height of a node as drawn; long text makes a node taller than the base height
+    getNodeHeight(node) {
+      const element = this.$el && this.$el.querySelector
+        ? this.$el.querySelector(`[data-node-id="${node.id}"]`)
+        : null;
+      return element ? element.offsetHeight : this.nodeBaseHeight;
+    },
+
+    // Find a place for a new child below its parent that does not cover
+    // another node. Places are tried directly below the parent first, then
+    // to the right and left in turn, then on the next row down.
+    findFreePosition(parent) {
+      const gap = 20;
+      const margin = 8;
+      const stepX = this.nodeWidth + gap;
+      const rowHeight = 90;
+      const parentHeight = this.getNodeHeight(parent);
+      const firstRowY = parent.position.y + Math.max(150, parentHeight + 80);
+      const canvas = this.$refs.canvas;
+      const canvasWidth = canvas ? canvas.clientWidth : window.innerWidth;
+      const maxX = Math.max(margin, canvasWidth - this.nodeWidth - margin);
+
+      const occupied = [this.resolutionNode, ...this.childNodes].map(node => ({
+        left: node.position.x,
+        top: node.position.y,
+        right: node.position.x + this.nodeWidth,
+        bottom: node.position.y + this.getNodeHeight(node),
+      }));
+      const isFree = (x, y) => occupied.every(box =>
+        x + this.nodeWidth + gap <= box.left ||
+        x >= box.right + gap ||
+        y + this.nodeBaseHeight + gap <= box.top ||
+        y >= box.bottom + gap
+      );
+
+      for (let row = 0; row < 6; row++) {
+        const y = firstRowY + row * rowHeight;
+        for (let step = 0; step < 9; step++) {
+          // 0, +1, -1, +2, -2, ... columns away from the parent
+          const column = step % 2 === 1 ? (step + 1) / 2 : -step / 2;
+          const x = parent.position.x + column * stepX;
+          if (x < margin || x > maxX) {
+            continue;
+          }
+          if (isFree(x, y)) {
+            return { x, y };
+          }
+        }
+      }
+
+      // The area below the parent is full; fall back to a small cascade
+      const count = this.edges.filter(edge => edge.source === parent.id).length;
+      return {
+        x: Math.min(maxX, parent.position.x + 30 * count),
+        y: firstRowY + 30 * count
+      };
     },
 
     getNodeById(id) {
