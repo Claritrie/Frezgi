@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # A fixed version keeps runs reproducible; Playwright 1.52 does not support newer Ubuntu releases
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: Vue
