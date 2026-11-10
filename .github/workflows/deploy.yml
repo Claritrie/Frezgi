@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    # A fixed version keeps runs reproducible; Playwright 1.52 does not support newer Ubuntu releases
+    # A fixed version keeps runs reproducible when GitHub updates "latest"
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -43,7 +43,7 @@ jobs:
 
   deploy:
     needs: build
-    # A fixed version keeps runs reproducible; Playwright 1.52 does not support newer Ubuntu releases
+    # A fixed version keeps runs reproducible when GitHub updates "latest"
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
