@@ -123,7 +123,8 @@
           :stroke="edge.color"
           :class="{ 'will-delete': isPendingDelete(edge.target) }"
           fill="transparent"
-          stroke-width="2"
+          stroke-width="2.5"
+          stroke-linecap="round"
         />
       </svg>
 
@@ -266,33 +267,35 @@ export default {
       editingNode: null,
       newNode: { type: "", text: "", color: "", parent: null },
       // All color settings (9 total)
-      canvasColor: "#000000", // Canvas background color
+      // Default palette: every text colour has a contrast of at least 4.5:1
+      // on its box, and every box has at least 3:1 on the canvas.
+      canvasColor: "#1E2430", // Canvas background color
       nodeColors: {
-        resolution: "#FFFFFF", // Main node background
-        pro: "#008000",       // Supporting node background
-        con: "#FF0000",       // Opposing node background
-        exp: "#FFFF00",       // Exploring node background
+        resolution: "#F4F1EA", // Main node background
+        pro: "#33845B",       // Supporting node background
+        con: "#BF4E47",       // Opposing node background
+        exp: "#E3B93E",       // Exploring node background
       },
       textColors: {
-        resolution: "#000000", // Main node text
+        resolution: "#1F2937", // Main node text
         pro: "#FFFFFF",       // Supporting node text
         con: "#FFFFFF",       // Opposing node text
-        exp: "#000000",       // Exploring node text
+        exp: "#1F2937",       // Exploring node text
       },
       // Default colors for reset
       defaultColors: {
-        canvas: "#000000",
+        canvas: "#1E2430",
         nodeColors: {
-          resolution: "#FFFFFF",
-          pro: "#008000",
-          con: "#FF0000",
-          exp: "#FFFF00",
+          resolution: "#F4F1EA",
+          pro: "#33845B",
+          con: "#BF4E47",
+          exp: "#E3B93E",
         },
         textColors: {
-          resolution: "#000000",
+          resolution: "#1F2937",
           pro: "#FFFFFF",
           con: "#FFFFFF",
-          exp: "#000000",
+          exp: "#1F2937",
         }
       },
       // Fixed node dimensions
@@ -344,6 +347,12 @@ export default {
 
     // Load saved color scheme if available
     this.loadColorScheme();
+
+    // Centre the main node so it is on screen at any width, including phones
+    this.resolutionNode.position.x = Math.max(
+      16,
+      Math.round((window.innerWidth - this.nodeWidth) / 2)
+    );
 
     try {
       this.legendCollapsed = localStorage.getItem('legend-collapsed') === 'true';
@@ -872,7 +881,7 @@ export default {
 
 <style>
 #app {
-  font-family: Arial, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   text-align: center;
 }
 
@@ -891,17 +900,29 @@ export default {
 .node {
   position: absolute;
   width: 150px;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
   text-align: center;
   cursor: grab;
   box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   z-index: 2;
-  transition: height 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+  transition: height 0.2s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.2s ease;
+}
+
+.node:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 .resolution-node {
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 15px;
+  border-width: 2px;
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .node.dragging {
@@ -1058,11 +1079,12 @@ input {
   top: 0;
   left: 0;
   bottom: 0;
-  background-color: rgba(40, 40, 40, 0.9);
-  color: white;
-  padding: 10px;
+  background-color: rgba(23, 28, 38, 0.97);
+  color: #e5e7eb;
+  padding: 12px;
   z-index: 100;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   width: 210px;
   transition: transform 0.3s ease;
   transform: translateX(0);
@@ -1082,7 +1104,7 @@ input {
   justify-content: center;
   margin-bottom: 15px;
   padding: 10px 5px 15px;
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Company logo */
@@ -1095,11 +1117,11 @@ input {
 /* Version number */
 .version-info {
   font-size: 11px;
-  color: #999;
+  color: #9ca3af;
   text-align: center;
   margin-top: 5px;
   padding-top: 5px;
-  border-top: 1px solid #555;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .color-picker-container {
@@ -1118,8 +1140,8 @@ input {
 .color-picker-section h4 {
   margin: 0 0 5px 0;
   font-size: 13px;
-  color: #ccc;
-  border-bottom: 1px dotted #555;
+  color: #d1d5db;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 3px;
 }
 
@@ -1155,10 +1177,11 @@ input {
 }
 
 .color-input {
-  width: 25px;
-  height: 25px;
-  border: none;
-  border-radius: 2px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: none;
   cursor: pointer;
   padding: 0;
 }
@@ -1166,18 +1189,19 @@ input {
 .reset-btn {
   margin-top: 8px;
   width: 100%;
-  background-color: #444;
+  background-color: #374151;
   color: white;
   border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
   font-size: 12px;
 }
 
-.reset-btn:hover {
-  background-color: #555;
+.reset-btn:hover,
+.reset-btn:focus-visible {
+  background-color: #4b5563;
 }
 
 .toggle-panel-btn {
@@ -1185,10 +1209,10 @@ input {
   top: 50%;
   left: 0;
   transform: translateY(-50%);
-  background-color: rgba(60, 60, 60, 0.7);
+  background-color: rgba(55, 65, 81, 0.85);
   color: white;
   border: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   width: 20px;
   height: 60px;
   padding: 0;
@@ -1278,7 +1302,7 @@ input {
   padding: 0;
   border: none;
   border-radius: 50%;
-  background-color: rgba(60, 60, 60, 0.8);
+  background-color: rgba(55, 65, 81, 0.9);
   color: white;
   font-size: 18px;
   font-weight: bold;
@@ -1313,9 +1337,10 @@ input {
   width: 290px;
   box-sizing: border-box;
   padding: 8px 12px 10px;
-  border-radius: 8px;
-  background-color: rgba(40, 40, 40, 0.9);
-  color: white;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(23, 28, 38, 0.95);
+  color: #e5e7eb;
   font-size: 13px;
   text-align: left;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
