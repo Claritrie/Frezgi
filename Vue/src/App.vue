@@ -4,7 +4,10 @@
     <div class="color-settings-panel" :class="{ 'hidden': !showColorPanel }">
       <!-- Logo at top -->
       <div class="panel-logo">
-        <img src="https://imgur.com/dlnsBR8.png" alt="Frezgi Logo" class="company-logo">
+        <div class="panel-brand">
+          <img src="https://imgur.com/dlnsBR8.png" alt="Frezgi Logo" class="company-logo">
+          <span class="panel-byline">by Claritrie</span>
+        </div>
       </div>
       
       <div class="color-picker-container">
@@ -1172,11 +1175,28 @@ input {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Logo and byline; the byline lines up with the right edge of the logo */
+.panel-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 100%;
+}
+
 /* Company logo */
 .company-logo {
-  width: 100%;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
   max-height: 60px;
-  object-fit: contain;
+}
+
+.panel-byline {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
 }
 
 /* Version number */
