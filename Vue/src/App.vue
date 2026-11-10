@@ -333,8 +333,19 @@ export default {
         { type: "resolution", name: "Resolution", meaning: "the statement you are examining" },
         { type: "pro", name: "Supporting", meaning: "a reason for the point it is linked to" },
         { type: "con", name: "Opposing", meaning: "a reason against the point it is linked to" },
-        { type: "exp", name: "Exploring", meaning: "a point that needs more thought or evidence" },
+        { type: "exp", name: "Exploring", meaning: "a question or something to check" },
       ],
+      // Shown in the dialog while a point is added, to explain what each type is for
+      pointGuidance: {
+        pro: "Give one reason why this point is true. Keep it to a single claim, so that it can be judged on its own.",
+        con: "Give one reason why this point may be false. Try to write the strongest objection, even if you disagree with it.",
+        exp: "Write a question or something to check, such as missing evidence or a word that needs a clear meaning.",
+      },
+      pointPlaceholders: {
+        pro: "Type your reason here...",
+        con: "Type your objection here...",
+        exp: "Type your question here...",
+      },
       // Buttons shown when the pointer is over a node
       nodeActions: [
         { type: "pro", emoji: "👍", label: "Add a supporting reason" },
@@ -357,12 +368,18 @@ export default {
       if (this.isEditingResolution) {
         return 'Write one clear statement that people could agree or disagree with. For example: "Phones should be banned in classrooms."';
       }
+      if (this.popupMode === 'add') {
+        return this.pointGuidance[this.newNode.type] || '';
+      }
       return '';
     },
 
     popupPlaceholder() {
       if (this.isEditingResolution) {
         return 'Type your resolution here...';
+      }
+      if (this.popupMode === 'add' && this.pointPlaceholders[this.newNode.type]) {
+        return this.pointPlaceholders[this.newNode.type];
       }
       return this.popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...';
     },
