@@ -3,6 +3,11 @@ import dotenv from "dotenv"
 
 dotenv.config({ path: './.env'});
 
+// Tests run against the local dev server by default. Set PLAYWRIGHT_BASE_URL
+// (for example in .env) to test another address, such as the live site.
+const LOCAL_URL = 'http://localhost:5173';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || LOCAL_URL;
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -20,7 +25,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'dot' : 'list',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL,
+    baseURL,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
@@ -37,4 +42,11 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'] },
     },
   ],
+
+  /* Start the dev server for local runs, or reuse one that is already running */
+  webServer: baseURL === LOCAL_URL ? {
+    command: 'npm run dev -- --port 5173 --strictPort',
+    url: LOCAL_URL,
+    reuseExistingServer: !process.env.CI,
+  } : undefined,
 });

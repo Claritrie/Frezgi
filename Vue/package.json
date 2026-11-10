@@ -1,18 +1,19 @@
 {
-  "name": "vite-vue-starter",
+  "name": "frezgi",
   "version": "0.1.0",
+  "private": true,
+  "description": "Free and open-source argument-mapping tool",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview",
+    "preview": "vite preview",
     "test": "playwright test",
-    "mac-arm:setup": "npm i @rollup/rollup-darwin-arm64 --no-save",
-    "postinstall": "npx playwright install-deps",
-    "playwright-setup": "npx playwright install-deps"
+    "test:setup": "playwright install --with-deps chromium firefox",
+    "mac-arm:setup": "npm i @rollup/rollup-darwin-arm64 --no-save"
   },
   "dependencies": {
-    "vue": "latest"
+    "vue": "^3.5.16"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
