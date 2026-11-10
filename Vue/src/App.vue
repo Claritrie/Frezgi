@@ -84,6 +84,22 @@
       </ul>
     </aside>
 
+    <!-- Step-by-step tips for a first map; shown to new users only -->
+    <div v-if="tutorialStep" class="coach" role="status">
+      <p class="coach-title">{{ tutorialStep === 'challenge' ? 'Next step: test your reason' : 'Well done' }}</p>
+      <p v-if="tutorialStep === 'challenge'" class="coach-text">
+        Hover over your reason and choose 👎 to add the strongest objection to it.
+        In an argument map, any reason can be supported, opposed or questioned, not only the resolution.
+      </p>
+      <p v-else class="coach-text">
+        You have built your first argument map. Keep adding reasons, objections and questions
+        until you can judge the resolution fairly.
+      </p>
+      <button type="button" class="coach-btn" @click="finishTutorial">
+        {{ tutorialStep === 'challenge' ? 'Skip tips' : 'Got it' }}
+      </button>
+    </div>
+
     <!-- Welcome Guide -->
     <div v-if="showGuide" class="guide-backdrop" @click.self="closeGuide">
       <div class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
@@ -328,6 +344,7 @@ export default {
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
       showGuide: false,
+      tutorialDone: false,
       legendCollapsed: false,
       legendItems: [
         { type: "resolution", name: "Resolution", meaning: "the statement you are examining" },
@@ -355,6 +372,19 @@ export default {
     };
   },
   computed: {
+    // Which first-map tip to show. The first two steps (write the resolution,
+    // add a reason) are taught by the hint under the main box for everyone.
+    tutorialStep() {
+      if (this.tutorialDone || this.showGuide || this.showPopup) {
+        return null;
+      }
+      if (!this.resolutionIsSet || this.childNodes.length === 0) {
+        return null;
+      }
+      const hasReplyToReason = this.edges.some(edge => edge.source !== this.resolutionNode.id);
+      return hasReplyToReason ? 'done' : 'challenge';
+    },
+
     // Reasons can only be added once the user has written a resolution
     resolutionIsSet() {
       return this.resolutionNode.text.trim() !== this.defaultResolutionText;
@@ -418,6 +448,7 @@ export default {
 
     try {
       this.legendCollapsed = localStorage.getItem('legend-collapsed') === 'true';
+      this.tutorialDone = localStorage.getItem('tutorial-done') === 'true';
     } catch (error) {
       // Storage may be blocked; keep the legend open
     }
@@ -456,6 +487,15 @@ export default {
         localStorage.setItem('guide-seen', 'true');
       } catch (error) {
         console.error('Failed to save guide state:', error);
+      }
+    },
+
+    finishTutorial() {
+      this.tutorialDone = true;
+      try {
+        localStorage.setItem('tutorial-done', 'true');
+      } catch (error) {
+        console.error('Failed to save tutorial state:', error);
       }
     },
 
@@ -1496,6 +1536,53 @@ input {
 }
 
 /* First-step hint */
+/* Step-by-step tips */
+/* Bottom left, away from the main box; above the Key on narrow screens */
+.coach {
+  position: fixed;
+  left: 16px;
+  bottom: 12px;
+  width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(37, 99, 235, 0.6);
+  background-color: #171c26;
+  color: #e5e7eb;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+.coach-title {
+  margin: 0 0 4px;
+  color: white;
+  font-weight: 700;
+}
+
+.coach-text {
+  margin: 0;
+}
+
+.coach-btn {
+  display: block;
+  margin: 8px 0 0 auto;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: none;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.coach-btn:hover,
+.coach-btn:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .empty-hint {
   position: absolute;
   width: 260px;
