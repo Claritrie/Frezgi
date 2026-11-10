@@ -104,31 +104,81 @@
     <div v-if="showGuide" class="guide-backdrop" @click.self="closeGuide">
       <div class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
         <h2 id="guide-title">Welcome to Frezgi</h2>
+        <p class="guide-progress">Page {{ guidePage + 1 }} of {{ guidePageCount }}</p>
+
+        <section v-if="guidePage === 0">
         <p class="guide-intro">
-          Frezgi helps you think a statement through. You write the statement,
-          then map the reasons that support it, the reasons that oppose it,
-          and the points that need more thought.
+          Frezgi is an argument-mapping tool. You write one statement, called the
+          resolution, and build a map of the reasons for it, the reasons against it,
+          and the questions it raises. The map helps you decide what you think, and why.
         </p>
 
-        <h3>How it helps</h3>
+        <h3>The parts of a map</h3>
+        <ul class="guide-parts">
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.resolution }"></span>
+            <span><strong>Resolution</strong>: the statement you are examining. It should be one clear claim that people could agree or disagree with.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.pro }"></span>
+            <span><strong>Supporting</strong> 👍: a reason why the point it is linked to is true.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.con }"></span>
+            <span><strong>Opposing</strong> 👎: a reason why the point it is linked to may be false. Opposing points stop you from seeing only one side.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.exp }"></span>
+            <span><strong>Exploring</strong> ✋: a question or something to check. It marks what you do not know yet.</span>
+          </li>
+        </ul>
+        </section>
+
+        <section v-if="guidePage === 1">
+        <h3>How it differs from a comment thread</h3>
+        <table class="guide-compare">
+          <thead>
+            <tr><th scope="col">In a comment thread</th><th scope="col">In an argument map</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Replies are listed in the order they were posted.</td><td>Each point is linked to the exact point it answers.</td></tr>
+            <tr><td>One post often mixes several ideas.</td><td>Each box holds one claim, so it can be judged on its own.</td></tr>
+            <tr><td>People reply to people.</td><td>You respond to ideas. Any reason can be supported, opposed or questioned.</td></tr>
+            <tr><td>The latest or loudest post gets the attention.</td><td>The shape of the map shows which reasons are supported and which are challenged.</td></tr>
+          </tbody>
+        </table>
+        </section>
+
+        <section v-if="guidePage === 2">
+        <h3>How it builds critical thinking</h3>
         <ul>
-          <li>You see every side of an issue in one place.</li>
-          <li>Each reason has its own box, so you can judge it on its own.</li>
-          <li>You find weak points and open questions before you decide.</li>
+          <li>You separate a claim from the reasons behind it.</li>
+          <li>You state the strongest objections, including objections to your own view.</li>
+          <li>You see which reasons have no support and which have not been challenged.</li>
+          <li>You turn doubts into questions that you can check.</li>
         </ul>
 
-        <h3>How to use it</h3>
-        <ol>
-          <li>Choose <strong>Write your resolution</strong> and write the statement you want to examine.</li>
-          <li>Hover over any box and choose 👍 to support it, 👎 to oppose it, or ✋ to explore it further.</li>
-          <li>Drag the boxes to arrange your map.</li>
-          <li>To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
+        <h3>Useful to know</h3>
+        <ul>
+          <li>Double-click a box to edit its text.</li>
+          <li>Drag the boxes to arrange your map. To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
           <li>Move your pointer to the left edge of the screen to change the colours.</li>
-        </ol>
+          <li>Choose <strong>?</strong> at the top right to see this guide again.</li>
+        </ul>
 
         <p class="guide-note">Note: your map is not saved when you close or reload the page.</p>
+        </section>
 
-        <button ref="guideStartBtn" @click="closeGuide" class="popup-btn confirm-btn">Start mapping</button>
+        <div class="guide-nav">
+          <button v-if="guidePage > 0" type="button" class="popup-btn cancel-btn" @click="guidePage--">Back</button>
+          <button v-else type="button" class="guide-skip" @click="closeGuide">Skip</button>
+          <button
+            ref="guideStartBtn"
+            type="button"
+            class="popup-btn confirm-btn"
+            @click="guidePage < guidePageCount - 1 ? nextGuidePage() : closeGuide()"
+          >{{ guidePage < guidePageCount - 1 ? 'Next' : 'Start mapping' }}</button>
+        </div>
       </div>
     </div>
 
@@ -344,6 +394,8 @@ export default {
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
       showGuide: false,
+      guidePage: 0,
+      guidePageCount: 3,
       tutorialDone: false,
       legendCollapsed: false,
       legendItems: [
@@ -473,7 +525,18 @@ export default {
   },
   methods: {
     openGuide() {
+      this.guidePage = 0;
       this.showGuide = true;
+      this.$nextTick(() => {
+        if (this.$refs.guideStartBtn) {
+          this.$refs.guideStartBtn.focus();
+        }
+      });
+    },
+
+    nextGuidePage() {
+      this.guidePage++;
+      // Keep keyboard focus on the main button as the page changes
       this.$nextTick(() => {
         if (this.$refs.guideStartBtn) {
           this.$refs.guideStartBtn.focus();
@@ -1706,6 +1769,46 @@ input {
   margin-bottom: 4px;
 }
 
+.guide-parts {
+  list-style: none;
+  padding-left: 0 !important;
+}
+
+.guide-parts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.guide-parts .legend-swatch {
+  border-color: rgba(0, 0, 0, 0.25);
+  margin-top: 4px;
+}
+
+.guide-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.guide-compare th,
+.guide-compare td {
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.guide-compare th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.guide-compare td:last-child {
+  background-color: #eff6ff;
+}
+
 .guide-intro {
   margin: 0;
 }
@@ -1716,9 +1819,77 @@ input {
   color: #6b7280;
 }
 
-.guide .confirm-btn {
-  display: block;
-  margin: 0 auto;
+/* Tighter guide on phones, so that each page needs little or no scrolling */
+@media (max-width: 480px) {
+  .guide {
+    padding: 16px 18px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .guide h2 {
+    font-size: 19px;
+  }
+
+  .guide h3 {
+    margin-top: 12px;
+  }
+
+  .guide-compare {
+    font-size: 13px;
+  }
+
+  .guide-compare th,
+  .guide-compare td {
+    padding: 4px 6px;
+  }
+}
+
+.guide-progress {
+  margin: 0 0 12px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.guide section h3:first-child {
+  margin-top: 0;
+}
+
+/* Kept in view when a page is taller than the screen */
+.guide-nav {
+  position: sticky;
+  bottom: -24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px -4px -8px;
+  padding: 8px 4px;
+  background: white;
+}
+
+@media (max-width: 480px) {
+  .guide-nav {
+    bottom: -16px;
+  }
+}
+
+.guide-nav .popup-btn {
+  margin: 0;
+}
+
+.guide-nav .confirm-btn {
+  margin-left: auto;
+}
+
+.guide-skip {
+  margin: 0;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: #4b5563;
+  font-size: 15px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 
