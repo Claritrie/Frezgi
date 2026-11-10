@@ -1252,7 +1252,8 @@ input {
 }
 
 .reset-btn {
-  margin-top: 8px;
+  /* No side margin: with width 100% it made the panel scroll sideways */
+  margin: 8px 0 0;
   width: 100%;
   background-color: #374151;
   color: white;
