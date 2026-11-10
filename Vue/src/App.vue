@@ -84,35 +84,101 @@
       </ul>
     </aside>
 
+    <!-- Step-by-step tips for a first map; shown to new users only -->
+    <div v-if="tutorialStep" class="coach" role="status">
+      <p class="coach-title">{{ tutorialStep === 'challenge' ? 'Next step: test your reason' : 'Well done' }}</p>
+      <p v-if="tutorialStep === 'challenge'" class="coach-text">
+        Hover over your reason and choose 👎 to add the strongest objection to it.
+        In an argument map, any reason can be supported, opposed or questioned, not only the resolution.
+      </p>
+      <p v-else class="coach-text">
+        You have built your first argument map. Keep adding reasons, objections and questions
+        until you can judge the resolution fairly.
+      </p>
+      <button type="button" class="coach-btn" @click="finishTutorial">
+        {{ tutorialStep === 'challenge' ? 'Skip tips' : 'Got it' }}
+      </button>
+    </div>
+
     <!-- Welcome Guide -->
     <div v-if="showGuide" class="guide-backdrop" @click.self="closeGuide">
       <div class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title">
         <h2 id="guide-title">Welcome to Frezgi</h2>
+        <p class="guide-progress">Page {{ guidePage + 1 }} of {{ guidePageCount }}</p>
+
+        <section v-if="guidePage === 0">
         <p class="guide-intro">
-          Frezgi helps you think a statement through. You write the statement,
-          then map the reasons that support it, the reasons that oppose it,
-          and the points that need more thought.
+          Frezgi is an argument-mapping tool. You write one statement, called the
+          resolution, and build a map of the reasons for it, the reasons against it,
+          and the questions it raises. The map helps you decide what you think, and why.
         </p>
 
-        <h3>How it helps</h3>
+        <h3>The parts of a map</h3>
+        <ul class="guide-parts">
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.resolution }"></span>
+            <span><strong>Resolution</strong>: the statement you are examining. It should be one clear claim that people could agree or disagree with.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.pro }"></span>
+            <span><strong>Supporting</strong> 👍: a reason why the point it is linked to is true.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.con }"></span>
+            <span><strong>Opposing</strong> 👎: a reason why the point it is linked to may be false. Opposing points stop you from seeing only one side.</span>
+          </li>
+          <li>
+            <span class="legend-swatch" :style="{ backgroundColor: nodeColors.exp }"></span>
+            <span><strong>Exploring</strong> ✋: a question or something to check. It marks what you do not know yet.</span>
+          </li>
+        </ul>
+        </section>
+
+        <section v-if="guidePage === 1">
+        <h3>How it differs from a comment thread</h3>
+        <table class="guide-compare">
+          <thead>
+            <tr><th scope="col">In a comment thread</th><th scope="col">In an argument map</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Replies are listed in the order they were posted.</td><td>Each point is linked to the exact point it answers.</td></tr>
+            <tr><td>One post often mixes several ideas.</td><td>Each box holds one claim, so it can be judged on its own.</td></tr>
+            <tr><td>People reply to people.</td><td>You respond to ideas. Any reason can be supported, opposed or questioned.</td></tr>
+            <tr><td>The latest or loudest post gets the attention.</td><td>The shape of the map shows which reasons are supported and which are challenged.</td></tr>
+          </tbody>
+        </table>
+        </section>
+
+        <section v-if="guidePage === 2">
+        <h3>How it builds critical thinking</h3>
         <ul>
-          <li>You see every side of an issue in one place.</li>
-          <li>Each reason has its own box, so you can judge it on its own.</li>
-          <li>You find weak points and open questions before you decide.</li>
+          <li>You separate a claim from the reasons behind it.</li>
+          <li>You state the strongest objections, including objections to your own view.</li>
+          <li>You see which reasons have no support and which have not been challenged.</li>
+          <li>You turn doubts into questions that you can check.</li>
         </ul>
 
-        <h3>How to use it</h3>
-        <ol>
-          <li>Double-click <strong>Main Resolution</strong> and write the statement you want to examine.</li>
-          <li>Hover over any box and choose 👍 to support it, 👎 to oppose it, or ✋ to explore it further.</li>
-          <li>Drag the boxes to arrange your map.</li>
-          <li>To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
+        <h3>Useful to know</h3>
+        <ul>
+          <li>Double-click a box to edit its text.</li>
+          <li>Drag the boxes to arrange your map. To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
           <li>Move your pointer to the left edge of the screen to change the colours.</li>
-        </ol>
+          <li>Choose <strong>?</strong> at the top right to see this guide again.</li>
+        </ul>
 
         <p class="guide-note">Note: your map is not saved when you close or reload the page.</p>
+        </section>
 
-        <button ref="guideStartBtn" @click="closeGuide" class="popup-btn confirm-btn">Start mapping</button>
+        <div class="guide-nav">
+          <button v-if="guidePage > 0" type="button" class="popup-btn cancel-btn" @click="guidePage--">Back</button>
+          <button v-else type="button" class="guide-skip" @click="closeGuide">Skip</button>
+          <button
+            ref="guideStartBtn"
+            type="button"
+            class="popup-btn confirm-btn"
+            @click="guidePage < guidePageCount - 1 ? nextGuidePage() : closeGuide()"
+          >{{ guidePage < guidePageCount - 1 ? 'Next' : 'Start mapping' }}</button>
+        </div>
       </div>
     </div>
 
@@ -148,7 +214,15 @@
         @dblclick="editNodeText(resolutionNode)"
       >
         {{ resolutionNode.text }}
-        <div v-if="resolutionNode.showEmojis && !showPopup" class="emoji-menu">
+        <!-- Until the resolution is written, the only action is to write it -->
+        <button
+          v-if="!resolutionIsSet"
+          type="button"
+          class="resolution-cta"
+          @mousedown.stop
+          @click="editNodeText(resolutionNode)"
+        >Write your resolution</button>
+        <div v-else-if="resolutionNode.showEmojis && !showPopup" class="emoji-menu">
           <button
             v-for="action in nodeActions"
             :key="action.type"
@@ -214,13 +288,19 @@
         v-if="childNodes.length === 0 && !showGuide"
         class="empty-hint"
         :style="{
-          top: resolutionNode.position.y + nodeWithEmojiHeight + 12 + 'px',
+          top: resolutionNode.position.y + (resolutionIsSet ? nodeWithEmojiHeight : 104) + 16 + 'px',
           left: resolutionNode.position.x - 55 + 'px',
           color: hintColor
         }"
       >
-        Hover over the box above to add your first point.<br />
-        Double-click any box to edit its text.
+        <template v-if="!resolutionIsSet">
+          First, write the statement you want to examine.<br />
+          Then you can add reasons for and against it.
+        </template>
+        <template v-else>
+          Hover over your resolution to add a reason for or against it.<br />
+          Double-click any box to edit its text.
+        </template>
       </p>
 
     </div>
@@ -233,14 +313,15 @@
           <input
             v-model="newNode.text"
             type="text"
-            :placeholder="popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...'"
+            :placeholder="popupPlaceholder"
             ref="newNodeInput"
             :aria-invalid="popupError ? 'true' : 'false'"
-            aria-describedby="popup-error"
+            aria-describedby="popup-help popup-error"
             @input="popupError = ''"
             @keydown.enter="submitPopup"
           />
         </label>
+        <p v-if="popupHelp" id="popup-help" class="popup-help">{{ popupHelp }}</p>
         <p id="popup-error" class="popup-error" aria-live="polite">{{ popupError }}</p>
         <div class="popup-buttons">
           <button @click="submitPopup" class="popup-btn confirm-btn">{{ popupMode === 'edit' ? 'Save' : 'Add' }}</button>
@@ -255,6 +336,8 @@
 export default {
   data() {
     return {
+      // Text of the main node before the user writes their resolution
+      defaultResolutionText: "Main Resolution",
       resolutionNode: {
         id: "resolution",
         position: { x: 300, y: 100 },
@@ -311,13 +394,27 @@ export default {
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
       showGuide: false,
+      guidePage: 0,
+      guidePageCount: 3,
+      tutorialDone: false,
       legendCollapsed: false,
       legendItems: [
         { type: "resolution", name: "Resolution", meaning: "the statement you are examining" },
         { type: "pro", name: "Supporting", meaning: "a reason for the point it is linked to" },
         { type: "con", name: "Opposing", meaning: "a reason against the point it is linked to" },
-        { type: "exp", name: "Exploring", meaning: "a point that needs more thought or evidence" },
+        { type: "exp", name: "Exploring", meaning: "a question or something to check" },
       ],
+      // Shown in the dialog while a point is added, to explain what each type is for
+      pointGuidance: {
+        pro: "Give one reason why this point is true. Keep it to a single claim, so that it can be judged on its own.",
+        con: "Give one reason why this point may be false. Try to write the strongest objection, even if you disagree with it.",
+        exp: "Write a question or something to check, such as missing evidence or a word that needs a clear meaning.",
+      },
+      pointPlaceholders: {
+        pro: "Type your reason here...",
+        con: "Type your objection here...",
+        exp: "Type your question here...",
+      },
       // Buttons shown when the pointer is over a node
       nodeActions: [
         { type: "pro", emoji: "👍", label: "Add a supporting reason" },
@@ -327,6 +424,48 @@ export default {
     };
   },
   computed: {
+    // Which first-map tip to show. The first two steps (write the resolution,
+    // add a reason) are taught by the hint under the main box for everyone.
+    tutorialStep() {
+      if (this.tutorialDone || this.showGuide || this.showPopup) {
+        return null;
+      }
+      if (!this.resolutionIsSet || this.childNodes.length === 0) {
+        return null;
+      }
+      const hasReplyToReason = this.edges.some(edge => edge.source !== this.resolutionNode.id);
+      return hasReplyToReason ? 'done' : 'challenge';
+    },
+
+    // Reasons can only be added once the user has written a resolution
+    resolutionIsSet() {
+      return this.resolutionNode.text.trim() !== this.defaultResolutionText;
+    },
+
+    isEditingResolution() {
+      return this.popupMode === 'edit' && this.editingNode === this.resolutionNode;
+    },
+
+    popupHelp() {
+      if (this.isEditingResolution) {
+        return 'Write one clear statement that people could agree or disagree with. For example: "Phones should be banned in classrooms."';
+      }
+      if (this.popupMode === 'add') {
+        return this.pointGuidance[this.newNode.type] || '';
+      }
+      return '';
+    },
+
+    popupPlaceholder() {
+      if (this.isEditingResolution) {
+        return 'Type your resolution here...';
+      }
+      if (this.popupMode === 'add' && this.pointPlaceholders[this.newNode.type]) {
+        return this.pointPlaceholders[this.newNode.type];
+      }
+      return this.popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...';
+    },
+
     pendingDeleteMessage() {
       if (!this.pendingDelete) {
         return '';
@@ -360,9 +499,14 @@ export default {
     );
 
     try {
-      this.legendCollapsed = localStorage.getItem('legend-collapsed') === 'true';
+      const savedLegend = localStorage.getItem('legend-collapsed');
+      this.legendCollapsed = savedLegend !== null
+        ? savedLegend === 'true'
+        : this.isNarrowScreen();
+      this.tutorialDone = localStorage.getItem('tutorial-done') === 'true';
     } catch (error) {
-      // Storage may be blocked; keep the legend open
+      // Storage may be blocked; use the default for this screen width
+      this.legendCollapsed = this.isNarrowScreen();
     }
 
     // Show the welcome guide on the first visit only
@@ -385,7 +529,18 @@ export default {
   },
   methods: {
     openGuide() {
+      this.guidePage = 0;
       this.showGuide = true;
+      this.$nextTick(() => {
+        if (this.$refs.guideStartBtn) {
+          this.$refs.guideStartBtn.focus();
+        }
+      });
+    },
+
+    nextGuidePage() {
+      this.guidePage++;
+      // Keep keyboard focus on the main button as the page changes
       this.$nextTick(() => {
         if (this.$refs.guideStartBtn) {
           this.$refs.guideStartBtn.focus();
@@ -399,6 +554,20 @@ export default {
         localStorage.setItem('guide-seen', 'true');
       } catch (error) {
         console.error('Failed to save guide state:', error);
+      }
+    },
+
+    // On phones the open Key would cover the map, so it starts collapsed there
+    isNarrowScreen() {
+      return window.innerWidth < 600;
+    },
+
+    finishTutorial() {
+      this.tutorialDone = true;
+      try {
+        localStorage.setItem('tutorial-done', 'true');
+      } catch (error) {
+        console.error('Failed to save tutorial state:', error);
       }
     },
 
@@ -747,6 +916,9 @@ export default {
     },
 
     getPopupLabel(type) {
+      if (this.isEditingResolution) {
+        return 'Your resolution';
+      }
       if (this.popupMode === 'edit') {
         return 'Edit text';
       }
@@ -819,6 +991,11 @@ export default {
       const text = this.newNode.text.trim();
       if (!text) {
         this.popupError = "The text cannot be empty.";
+        this.focusPopupInput();
+        return;
+      }
+      if (this.isEditingResolution && text === this.defaultResolutionText) {
+        this.popupError = "Write your own statement to examine.";
         this.focusPopupInput();
         return;
       }
@@ -939,7 +1116,9 @@ export default {
       this.popupMode = "edit";
       this.editingNode = node;
       this.popupError = "";
-      this.newNode = { type: node.type || "resolution", text: node.text, color: "", parent: null };
+      // Start with an empty box instead of the default "Main Resolution" text
+      const text = node === this.resolutionNode && !this.resolutionIsSet ? "" : node.text;
+      this.newNode = { type: node.type || "resolution", text, color: "", parent: null };
       this.showPopup = true;
       this.focusPopupInput(true);
     }
@@ -1032,6 +1211,24 @@ export default {
   z-index: 4;
 }
 
+.resolution-cta {
+  display: block;
+  margin: 8px auto 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resolution-cta:hover,
+.resolution-cta:focus-visible {
+  background-color: #1d4ed8;
+}
+
 .emoji-menu {
   margin-top: 10px;
   display: flex;
@@ -1116,6 +1313,14 @@ export default {
   color: #1f2937;
   text-align: left;
   font-weight: 600;
+}
+
+.popup-help {
+  margin: 0 0 6px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.45;
 }
 
 .popup-error {
@@ -1403,6 +1608,60 @@ input {
 }
 
 /* First-step hint */
+/* Step-by-step tips */
+/* Bottom left, away from the main box */
+.coach {
+  position: fixed;
+  left: 16px;
+  bottom: 12px;
+  width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(37, 99, 235, 0.6);
+  background-color: #171c26;
+  color: #e5e7eb;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+/* On phones, sit above the collapsed Key instead of covering it */
+@media (max-width: 599px) {
+  .coach {
+    bottom: 56px;
+  }
+}
+
+.coach-title {
+  margin: 0 0 4px;
+  color: white;
+  font-weight: 700;
+}
+
+.coach-text {
+  margin: 0;
+}
+
+.coach-btn {
+  display: block;
+  margin: 8px 0 0 auto;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: none;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.coach-btn:hover,
+.coach-btn:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .empty-hint {
   position: absolute;
   width: 260px;
@@ -1526,6 +1785,46 @@ input {
   margin-bottom: 4px;
 }
 
+.guide-parts {
+  list-style: none;
+  padding-left: 0 !important;
+}
+
+.guide-parts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.guide-parts .legend-swatch {
+  border-color: rgba(0, 0, 0, 0.25);
+  margin-top: 4px;
+}
+
+.guide-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.guide-compare th,
+.guide-compare td {
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.guide-compare th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.guide-compare td:last-child {
+  background-color: #eff6ff;
+}
+
 .guide-intro {
   margin: 0;
 }
@@ -1536,9 +1835,77 @@ input {
   color: #6b7280;
 }
 
-.guide .confirm-btn {
-  display: block;
-  margin: 0 auto;
+/* Tighter guide on phones, so that each page needs little or no scrolling */
+@media (max-width: 480px) {
+  .guide {
+    padding: 16px 18px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .guide h2 {
+    font-size: 19px;
+  }
+
+  .guide h3 {
+    margin-top: 12px;
+  }
+
+  .guide-compare {
+    font-size: 13px;
+  }
+
+  .guide-compare th,
+  .guide-compare td {
+    padding: 4px 6px;
+  }
+}
+
+.guide-progress {
+  margin: 0 0 12px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.guide section h3:first-child {
+  margin-top: 0;
+}
+
+/* Kept in view when a page is taller than the screen */
+.guide-nav {
+  position: sticky;
+  bottom: -24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px -4px -8px;
+  padding: 8px 4px;
+  background: white;
+}
+
+@media (max-width: 480px) {
+  .guide-nav {
+    bottom: -16px;
+  }
+}
+
+.guide-nav .popup-btn {
+  margin: 0;
+}
+
+.guide-nav .confirm-btn {
+  margin-left: auto;
+}
+
+.guide-skip {
+  margin: 0;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: #4b5563;
+  font-size: 15px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 
