@@ -412,9 +412,17 @@ export default {
       if (event.key !== 'Escape') {
         return;
       }
+      if (!this.showPopup && !this.showGuide) {
+        // Not used by the app; leave Escape to the browser (for example,
+        // so that it can still exit full screen).
+        return;
+      }
+      // Mark the key as handled. Without this, Safari on macOS also uses
+      // Escape to take the window out of full screen (issue #10).
+      event.preventDefault();
       if (this.showPopup) {
         this.closePopup();
-      } else if (this.showGuide) {
+      } else {
         this.closeGuide();
       }
     },
