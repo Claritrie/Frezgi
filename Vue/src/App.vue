@@ -333,16 +333,32 @@
 </template>
 
 <script>
+import {
+  DEFAULT_COLORS,
+  DEFAULT_RESOLUTION_TEXT,
+  NODE_BASE_HEIGHT,
+  NODE_MENU_HEIGHT,
+  NODE_TYPES,
+  NODE_WIDTH,
+  NARROW_SCREEN_WIDTH,
+  POINT_TYPES,
+  RESOLUTION_HELP,
+  RESOLUTION_ID,
+  STORAGE_KEYS,
+} from './constants.js';
+import { isLightColor, readableTextColor } from './utils/color.js';
+import { boxesOverlap, findFreePosition, linkPath } from './utils/layout.js';
+import { readStorage, writeStorage } from './utils/storage.js';
+
 export default {
   data() {
     return {
-      // Text of the main node before the user writes their resolution
-      defaultResolutionText: "Main Resolution",
+      defaultResolutionText: DEFAULT_RESOLUTION_TEXT,
       resolutionNode: {
-        id: "resolution",
+        id: RESOLUTION_ID,
         position: { x: 300, y: 100 },
         showEmojis: false,
-        text: "Main Resolution",
+        text: DEFAULT_RESOLUTION_TEXT,
       },
       childNodes: [],
       edges: [],
@@ -354,42 +370,12 @@ export default {
       popupError: "",
       editingNode: null,
       newNode: { type: "", text: "", color: "", parent: null },
-      // All color settings (9 total)
-      // Default palette: every text colour has a contrast of at least 4.5:1
-      // on its box, and every box has at least 3:1 on the canvas.
-      canvasColor: "#1E2430", // Canvas background color
-      nodeColors: {
-        resolution: "#F4F1EA", // Main node background
-        pro: "#33845B",       // Supporting node background
-        con: "#BF4E47",       // Opposing node background
-        exp: "#E3B93E",       // Exploring node background
-      },
-      textColors: {
-        resolution: "#1F2937", // Main node text
-        pro: "#FFFFFF",       // Supporting node text
-        con: "#FFFFFF",       // Opposing node text
-        exp: "#1F2937",       // Exploring node text
-      },
-      // Default colors for reset
-      defaultColors: {
-        canvas: "#1E2430",
-        nodeColors: {
-          resolution: "#F4F1EA",
-          pro: "#33845B",
-          con: "#BF4E47",
-          exp: "#E3B93E",
-        },
-        textColors: {
-          resolution: "#1F2937",
-          pro: "#FFFFFF",
-          con: "#FFFFFF",
-          exp: "#1F2937",
-        }
-      },
-      // Fixed node dimensions
-      nodeWidth: 150,
-      nodeBaseHeight: 40,
-      nodeWithEmojiHeight: 80,
+      canvasColor: DEFAULT_COLORS.canvas,
+      nodeColors: { ...DEFAULT_COLORS.nodeColors },
+      textColors: { ...DEFAULT_COLORS.textColors },
+      nodeWidth: NODE_WIDTH,
+      nodeBaseHeight: NODE_BASE_HEIGHT,
+      nodeWithEmojiHeight: NODE_MENU_HEIGHT,
       refreshTrigger: 0,
       showColorPanel: false, // Start with color panel hidden
       autoHideTimeout: null,
@@ -398,29 +384,16 @@ export default {
       guidePageCount: 3,
       tutorialDone: false,
       legendCollapsed: false,
-      legendItems: [
-        { type: "resolution", name: "Resolution", meaning: "the statement you are examining" },
-        { type: "pro", name: "Supporting", meaning: "a reason for the point it is linked to" },
-        { type: "con", name: "Opposing", meaning: "a reason against the point it is linked to" },
-        { type: "exp", name: "Exploring", meaning: "a question or something to check" },
-      ],
-      // Shown in the dialog while a point is added, to explain what each type is for
-      pointGuidance: {
-        pro: "Give one reason why this point is true. Keep it to a single claim, so that it can be judged on its own.",
-        con: "Give one reason why this point may be false. Try to write the strongest objection, even if you disagree with it.",
-        exp: "Write a question or something to check, such as missing evidence or a word that needs a clear meaning.",
-      },
-      pointPlaceholders: {
-        pro: "Type your reason here...",
-        con: "Type your objection here...",
-        exp: "Type your question here...",
-      },
-      // Buttons shown when the pointer is over a node
-      nodeActions: [
-        { type: "pro", emoji: "👍", label: "Add a supporting reason" },
-        { type: "con", emoji: "👎", label: "Add an opposing reason" },
-        { type: "exp", emoji: "✋", label: "Add a point to explore" },
-      ],
+      legendItems: Object.entries(NODE_TYPES).map(([type, info]) => ({
+        type,
+        name: info.name,
+        meaning: info.keyMeaning,
+      })),
+      nodeActions: POINT_TYPES.map(type => ({
+        type,
+        emoji: NODE_TYPES[type].emoji,
+        label: NODE_TYPES[type].actionLabel,
+      })),
     };
   },
   computed: {
@@ -448,10 +421,10 @@ export default {
 
     popupHelp() {
       if (this.isEditingResolution) {
-        return 'Write one clear statement that people could agree or disagree with. For example: "Phones should be banned in classrooms."';
+        return RESOLUTION_HELP;
       }
       if (this.popupMode === 'add') {
-        return this.pointGuidance[this.newNode.type] || '';
+        return (NODE_TYPES[this.newNode.type] || {}).guidance || '';
       }
       return '';
     },
@@ -460,8 +433,9 @@ export default {
       if (this.isEditingResolution) {
         return 'Type your resolution here...';
       }
-      if (this.popupMode === 'add' && this.pointPlaceholders[this.newNode.type]) {
-        return this.pointPlaceholders[this.newNode.type];
+      const placeholder = (NODE_TYPES[this.newNode.type] || {}).placeholder;
+      if (this.popupMode === 'add' && placeholder) {
+        return placeholder;
       }
       return this.popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...';
     },
@@ -478,8 +452,7 @@ export default {
     },
     // Hint text colour that stays readable on the current canvas colour
     hintColor() {
-      const luminance = this.getLuminance(this.canvasColor);
-      return luminance !== null && luminance > 0.4
+      return isLightColor(this.canvasColor)
         ? 'rgba(0, 0, 0, 0.6)'
         : 'rgba(255, 255, 255, 0.7)';
     },
@@ -498,25 +471,14 @@ export default {
       Math.round((window.innerWidth - this.nodeWidth) / 2)
     );
 
-    try {
-      const savedLegend = localStorage.getItem('legend-collapsed');
-      this.legendCollapsed = savedLegend !== null
-        ? savedLegend === 'true'
-        : this.isNarrowScreen();
-      this.tutorialDone = localStorage.getItem('tutorial-done') === 'true';
-    } catch (error) {
-      // Storage may be blocked; use the default for this screen width
-      this.legendCollapsed = this.isNarrowScreen();
-    }
+    const savedLegend = readStorage(STORAGE_KEYS.keyCollapsed);
+    this.legendCollapsed = savedLegend !== null
+      ? savedLegend === 'true'
+      : this.isNarrowScreen();
+    this.tutorialDone = readStorage(STORAGE_KEYS.tutorialDone) === 'true';
 
     // Show the welcome guide on the first visit only
-    let guideSeen = false;
-    try {
-      guideSeen = localStorage.getItem('guide-seen') === 'true';
-    } catch (error) {
-      // Storage may be blocked; show the guide in that case
-    }
-    if (!guideSeen) {
+    if (readStorage(STORAGE_KEYS.guideSeen) !== 'true') {
       this.openGuide();
     }
   },
@@ -550,34 +512,22 @@ export default {
 
     closeGuide() {
       this.showGuide = false;
-      try {
-        localStorage.setItem('guide-seen', 'true');
-      } catch (error) {
-        console.error('Failed to save guide state:', error);
-      }
+      writeStorage(STORAGE_KEYS.guideSeen, 'true');
     },
 
     // On phones the open Key would cover the map, so it starts collapsed there
     isNarrowScreen() {
-      return window.innerWidth < 600;
+      return window.innerWidth < NARROW_SCREEN_WIDTH;
     },
 
     finishTutorial() {
       this.tutorialDone = true;
-      try {
-        localStorage.setItem('tutorial-done', 'true');
-      } catch (error) {
-        console.error('Failed to save tutorial state:', error);
-      }
+      writeStorage(STORAGE_KEYS.tutorialDone, 'true');
     },
 
     toggleLegend() {
       this.legendCollapsed = !this.legendCollapsed;
-      try {
-        localStorage.setItem('legend-collapsed', String(this.legendCollapsed));
-      } catch (error) {
-        console.error('Failed to save legend state:', error);
-      }
+      writeStorage(STORAGE_KEYS.keyCollapsed, String(this.legendCollapsed));
     },
 
     handleGuideKeydown(event) {
@@ -633,7 +583,7 @@ export default {
     
     loadColorScheme() {
       try {
-        const savedScheme = localStorage.getItem('color-scheme');
+        const savedScheme = readStorage(STORAGE_KEYS.colorScheme);
         if (savedScheme) {
           const colorScheme = JSON.parse(savedScheme);
           
@@ -667,53 +617,24 @@ export default {
       }
     },
     
-    // Relative luminance of a "#RRGGBB" colour (WCAG 2 formula)
-    getLuminance(hex) {
-      const value = parseInt(String(hex).replace('#', ''), 16);
-      if (Number.isNaN(value)) {
-        return null;
-      }
-      const channels = [(value >> 16) & 255, (value >> 8) & 255, value & 255].map(c => {
-        const s = c / 255;
-        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-      });
-      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-    },
-
-    getContrastRatio(hexA, hexB) {
-      const a = this.getLuminance(hexA);
-      const b = this.getLuminance(hexB);
-      if (a === null || b === null) {
-        return null;
-      }
-      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-    },
-
     // If a node's text colour is too close to its background colour,
     // replace it with black or white, whichever is easier to read.
     ensureReadableText(type) {
-      const background = this.nodeColors[type];
-      const ratio = this.getContrastRatio(background, this.textColors[type]);
-      if (ratio !== null && ratio >= 3) {
-        return;
-      }
-      const onBlack = this.getContrastRatio(background, '#000000') || 0;
-      const onWhite = this.getContrastRatio(background, '#FFFFFF') || 0;
-      this.textColors[type] = onBlack >= onWhite ? '#000000' : '#FFFFFF';
+      this.textColors[type] = readableTextColor(this.nodeColors[type], this.textColors[type]);
     },
 
     resetColorScheme() {
       // Reset to default colors
-      this.canvasColor = this.defaultColors.canvas;
+      this.canvasColor = DEFAULT_COLORS.canvas;
       
       // Reset node background colors
       for (const type in this.nodeColors) {
-        this.nodeColors[type] = this.defaultColors.nodeColors[type];
+        this.nodeColors[type] = DEFAULT_COLORS.nodeColors[type];
       }
       
       // Reset text colors
       for (const type in this.textColors) {
-        this.textColors[type] = this.defaultColors.textColors[type];
+        this.textColors[type] = DEFAULT_COLORS.textColors[type];
       }
       
       // Update edge colors
@@ -731,21 +652,11 @@ export default {
         textColors: this.textColors
       };
       
-      try {
-        localStorage.setItem('color-scheme', JSON.stringify(colorScheme));
-      } catch (error) {
-        console.error('Failed to save color scheme:', error);
-      }
+      writeStorage(STORAGE_KEYS.colorScheme, JSON.stringify(colorScheme));
     },
     
     getNodeTypeLabel(type) {
-      switch(type) {
-        case 'resolution': return 'Main';
-        case 'pro': return 'Supporting';
-        case 'con': return 'Opposing';
-        case 'exp': return 'Exploring';
-        default: return type.charAt(0).toUpperCase() + type.slice(1);
-      }
+      return NODE_TYPES[type].panelLabel;
     },
     
     updateEdgeColors() {
@@ -763,30 +674,23 @@ export default {
       this.saveColorScheme();
     },
 
+    // Bounding box of a node; the hover menu makes a node taller
+    nodeBox(node, height = node.showEmojis ? this.nodeWithEmojiHeight : this.nodeBaseHeight) {
+      return {
+        left: node.position.x,
+        top: node.position.y,
+        right: node.position.x + this.nodeWidth,
+        bottom: node.position.y + height,
+      };
+    },
+
     calculatePath(sourceId, targetId) {
       const sourceNode = this.getNodeById(sourceId);
       const targetNode = this.getNodeById(targetId);
-
       if (!sourceNode || !targetNode) {
         return '';
       }
-
-      // Determine the actual height based on whether emoji menu is showing
-      const sourceHeight = sourceNode.showEmojis ? this.nodeWithEmojiHeight : this.nodeBaseHeight;
-
-      // Calculate the anchor points
-      const sourceX = sourceNode.position.x + this.nodeWidth / 2;
-      const sourceY = sourceNode.position.y + sourceHeight;
-
-      // For target, use the exact top center
-      const targetX = targetNode.position.x + this.nodeWidth / 2;
-      const targetY = targetNode.position.y; // Top of target node
-
-      // Create a curved path with improved control points
-      const distance = Math.abs(targetY - sourceY);
-      const controlPointOffset = Math.min(distance * 0.5, 80); // Limit the curve
-
-      return `M${sourceX},${sourceY} C${sourceX},${sourceY + controlPointOffset} ${targetX},${targetY - controlPointOffset} ${targetX},${targetY}`;
+      return linkPath(this.nodeBox(sourceNode), this.nodeBox(targetNode));
     },
 
     startDrag(event, node) {
@@ -835,7 +739,7 @@ export default {
     // Work out whether releasing the dragged node now would remove it
     updatePendingDelete(node) {
       let pending = null;
-      if (node.id !== "resolution") {
+      if (node.id !== RESOLUTION_ID) {
         const parentEdge = this.edges.find(e => e.target === node.id);
         const parentNode = parentEdge ? this.getNodeById(parentEdge.source) : null;
         if (parentNode && this.nodesOverlap(node, parentNode)) {
@@ -859,24 +763,7 @@ export default {
     },
 
     nodesOverlap(node1, node2) {
-      // Get node1 bounding box
-      const node1Left = node1.position.x;
-      const node1Top = node1.position.y;
-      const node1Right = node1.position.x + this.nodeWidth;
-      const node1Bottom = node1.position.y + (node1.showEmojis ? this.nodeWithEmojiHeight : this.nodeBaseHeight);
-      
-      // Get node2 bounding box
-      const node2Left = node2.position.x;
-      const node2Top = node2.position.y;
-      const node2Right = node2.position.x + this.nodeWidth;
-      const node2Bottom = node2.position.y + (node2.showEmojis ? this.nodeWithEmojiHeight : this.nodeBaseHeight);
-      
-      // Check for overlap
-      const horizontalOverlap = node1Left < node2Right && node1Right > node2Left;
-      const verticalOverlap = node1Top < node2Bottom && node1Bottom > node2Top;
-      
-      // If there's both horizontal and vertical overlap, the nodes overlap
-      return horizontalOverlap && verticalOverlap;
+      return boxesOverlap(this.nodeBox(node1), this.nodeBox(node2));
     },
 
     deleteChildNode(nodeId) {
@@ -1045,58 +932,21 @@ export default {
       return element ? element.offsetHeight : this.nodeBaseHeight;
     },
 
-    // Find a place for a new child below its parent that does not cover
-    // another node. Places are tried directly below the parent first, then
-    // to the right and left in turn, then on the next row down.
     findFreePosition(parent) {
-      const gap = 20;
-      const margin = 8;
-      const stepX = this.nodeWidth + gap;
-      const rowHeight = 90;
-      const parentHeight = this.getNodeHeight(parent);
-      const firstRowY = parent.position.y + Math.max(150, parentHeight + 80);
       const canvas = this.$refs.canvas;
-      const canvasWidth = canvas ? canvas.clientWidth : window.innerWidth;
-      const maxX = Math.max(margin, canvasWidth - this.nodeWidth - margin);
-
-      const occupied = [this.resolutionNode, ...this.childNodes].map(node => ({
-        left: node.position.x,
-        top: node.position.y,
-        right: node.position.x + this.nodeWidth,
-        bottom: node.position.y + this.getNodeHeight(node),
-      }));
-      const isFree = (x, y) => occupied.every(box =>
-        x + this.nodeWidth + gap <= box.left ||
-        x >= box.right + gap ||
-        y + this.nodeBaseHeight + gap <= box.top ||
-        y >= box.bottom + gap
-      );
-
-      for (let row = 0; row < 6; row++) {
-        const y = firstRowY + row * rowHeight;
-        for (let step = 0; step < 9; step++) {
-          // 0, +1, -1, +2, -2, ... columns away from the parent
-          const column = step % 2 === 1 ? (step + 1) / 2 : -step / 2;
-          const x = parent.position.x + column * stepX;
-          if (x < margin || x > maxX) {
-            continue;
-          }
-          if (isFree(x, y)) {
-            return { x, y };
-          }
-        }
-      }
-
-      // The area below the parent is full; fall back to a small cascade
-      const count = this.edges.filter(edge => edge.source === parent.id).length;
-      return {
-        x: Math.min(maxX, parent.position.x + 30 * count),
-        y: firstRowY + 30 * count
-      };
+      const allNodes = [this.resolutionNode, ...this.childNodes];
+      return findFreePosition({
+        parent: this.nodeBox(parent, this.getNodeHeight(parent)),
+        occupied: allNodes.map(node => this.nodeBox(node, this.getNodeHeight(node))),
+        canvasWidth: canvas ? canvas.clientWidth : window.innerWidth,
+        boxWidth: this.nodeWidth,
+        boxHeight: this.nodeBaseHeight,
+        siblingCount: this.edges.filter(edge => edge.source === parent.id).length,
+      });
     },
 
     getNodeById(id) {
-      if (id === "resolution") {
+      if (id === RESOLUTION_ID) {
         return this.resolutionNode;
       }
       return this.childNodes.find(node => node.id === id);
