@@ -103,7 +103,7 @@
 
         <h3>How to use it</h3>
         <ol>
-          <li>Double-click <strong>Main Resolution</strong> and write the statement you want to examine.</li>
+          <li>Choose <strong>Write your resolution</strong> and write the statement you want to examine.</li>
           <li>Hover over any box and choose 👍 to support it, 👎 to oppose it, or ✋ to explore it further.</li>
           <li>Drag the boxes to arrange your map.</li>
           <li>To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
@@ -148,7 +148,15 @@
         @dblclick="editNodeText(resolutionNode)"
       >
         {{ resolutionNode.text }}
-        <div v-if="resolutionNode.showEmojis && !showPopup" class="emoji-menu">
+        <!-- Until the resolution is written, the only action is to write it -->
+        <button
+          v-if="!resolutionIsSet"
+          type="button"
+          class="resolution-cta"
+          @mousedown.stop
+          @click="editNodeText(resolutionNode)"
+        >Write your resolution</button>
+        <div v-else-if="resolutionNode.showEmojis && !showPopup" class="emoji-menu">
           <button
             v-for="action in nodeActions"
             :key="action.type"
@@ -214,13 +222,19 @@
         v-if="childNodes.length === 0 && !showGuide"
         class="empty-hint"
         :style="{
-          top: resolutionNode.position.y + nodeWithEmojiHeight + 12 + 'px',
+          top: resolutionNode.position.y + (resolutionIsSet ? nodeWithEmojiHeight : 104) + 16 + 'px',
           left: resolutionNode.position.x - 55 + 'px',
           color: hintColor
         }"
       >
-        Hover over the box above to add your first point.<br />
-        Double-click any box to edit its text.
+        <template v-if="!resolutionIsSet">
+          First, write the statement you want to examine.<br />
+          Then you can add reasons for and against it.
+        </template>
+        <template v-else>
+          Hover over your resolution to add a reason for or against it.<br />
+          Double-click any box to edit its text.
+        </template>
       </p>
 
     </div>
@@ -233,14 +247,15 @@
           <input
             v-model="newNode.text"
             type="text"
-            :placeholder="popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...'"
+            :placeholder="popupPlaceholder"
             ref="newNodeInput"
             :aria-invalid="popupError ? 'true' : 'false'"
-            aria-describedby="popup-error"
+            aria-describedby="popup-help popup-error"
             @input="popupError = ''"
             @keydown.enter="submitPopup"
           />
         </label>
+        <p v-if="popupHelp" id="popup-help" class="popup-help">{{ popupHelp }}</p>
         <p id="popup-error" class="popup-error" aria-live="polite">{{ popupError }}</p>
         <div class="popup-buttons">
           <button @click="submitPopup" class="popup-btn confirm-btn">{{ popupMode === 'edit' ? 'Save' : 'Add' }}</button>
@@ -255,6 +270,8 @@
 export default {
   data() {
     return {
+      // Text of the main node before the user writes their resolution
+      defaultResolutionText: "Main Resolution",
       resolutionNode: {
         id: "resolution",
         position: { x: 300, y: 100 },
@@ -327,6 +344,29 @@ export default {
     };
   },
   computed: {
+    // Reasons can only be added once the user has written a resolution
+    resolutionIsSet() {
+      return this.resolutionNode.text.trim() !== this.defaultResolutionText;
+    },
+
+    isEditingResolution() {
+      return this.popupMode === 'edit' && this.editingNode === this.resolutionNode;
+    },
+
+    popupHelp() {
+      if (this.isEditingResolution) {
+        return 'Write one clear statement that people could agree or disagree with. For example: "Phones should be banned in classrooms."';
+      }
+      return '';
+    },
+
+    popupPlaceholder() {
+      if (this.isEditingResolution) {
+        return 'Type your resolution here...';
+      }
+      return this.popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...';
+    },
+
     pendingDeleteMessage() {
       if (!this.pendingDelete) {
         return '';
@@ -747,6 +787,9 @@ export default {
     },
 
     getPopupLabel(type) {
+      if (this.isEditingResolution) {
+        return 'Your resolution';
+      }
       if (this.popupMode === 'edit') {
         return 'Edit text';
       }
@@ -819,6 +862,11 @@ export default {
       const text = this.newNode.text.trim();
       if (!text) {
         this.popupError = "The text cannot be empty.";
+        this.focusPopupInput();
+        return;
+      }
+      if (this.isEditingResolution && text === this.defaultResolutionText) {
+        this.popupError = "Write your own statement to examine.";
         this.focusPopupInput();
         return;
       }
@@ -939,7 +987,9 @@ export default {
       this.popupMode = "edit";
       this.editingNode = node;
       this.popupError = "";
-      this.newNode = { type: node.type || "resolution", text: node.text, color: "", parent: null };
+      // Start with an empty box instead of the default "Main Resolution" text
+      const text = node === this.resolutionNode && !this.resolutionIsSet ? "" : node.text;
+      this.newNode = { type: node.type || "resolution", text, color: "", parent: null };
       this.showPopup = true;
       this.focusPopupInput(true);
     }
@@ -1032,6 +1082,24 @@ export default {
   z-index: 4;
 }
 
+.resolution-cta {
+  display: block;
+  margin: 8px auto 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resolution-cta:hover,
+.resolution-cta:focus-visible {
+  background-color: #1d4ed8;
+}
+
 .emoji-menu {
   margin-top: 10px;
   display: flex;
@@ -1116,6 +1184,14 @@ export default {
   color: #1f2937;
   text-align: left;
   font-weight: 600;
+}
+
+.popup-help {
+  margin: 0 0 6px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.45;
 }
 
 .popup-error {
