@@ -1,0 +1,53 @@
+# Builds the app and publishes it to GitHub Pages on every change to main.
+# The build itself is "npm ci" and "npm run build" in Vue/, so any other CI
+# service or static host can run the same two commands and serve Vue/dist.
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deployment that has started; queue the next one instead
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # A fixed version keeps runs reproducible when GitHub updates "latest"
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: Vue
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Vue/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: Vue/dist
+
+  deploy:
+    needs: build
+    # A fixed version keeps runs reproducible when GitHub updates "latest"
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
