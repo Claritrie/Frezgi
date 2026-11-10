@@ -141,7 +141,7 @@
         @dblclick="editNodeText(resolutionNode)"
       >
         {{ resolutionNode.text }}
-        <div v-if="resolutionNode.showEmojis" class="emoji-menu">
+        <div v-if="resolutionNode.showEmojis && !showPopup" class="emoji-menu">
           <button
             v-for="action in nodeActions"
             :key="action.type"
@@ -172,7 +172,7 @@
         @dblclick="editNodeText(node)"
       >
         {{ node.text }}
-        <div v-if="node.showEmojis" class="emoji-menu">
+        <div v-if="node.showEmojis && !showPopup" class="emoji-menu">
           <button
             v-for="action in nodeActions"
             :key="action.type"
@@ -200,25 +200,30 @@
         Double-click any box to edit its text.
       </p>
 
-      <!-- Popup for Statement -->
-      <div v-if="showPopup" class="popup">
+    </div>
+
+    <!-- Dialog for adding a point or editing a box -->
+    <div v-if="showPopup" class="popup-backdrop" @mousedown.self="closePopup">
+      <div class="popup" role="dialog" aria-modal="true">
         <label>
           {{ getPopupLabel(newNode.type) }}
           <input
             v-model="newNode.text"
             type="text"
-            placeholder="Type your claim here..."
+            :placeholder="popupMode === 'edit' ? 'Type the new text here...' : 'Type your point here...'"
             ref="newNodeInput"
-            @keydown.enter="addChildNode"
-            @keydown.escape="closePopup"
+            :aria-invalid="popupError ? 'true' : 'false'"
+            aria-describedby="popup-error"
+            @input="popupError = ''"
+            @keydown.enter="submitPopup"
           />
         </label>
+        <p id="popup-error" class="popup-error" aria-live="polite">{{ popupError }}</p>
         <div class="popup-buttons">
-          <button @click="addChildNode" class="popup-btn confirm-btn">Add</button>
+          <button @click="submitPopup" class="popup-btn confirm-btn">{{ popupMode === 'edit' ? 'Save' : 'Add' }}</button>
           <button @click="closePopup" class="popup-btn cancel-btn">Cancel</button>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -237,6 +242,9 @@ export default {
       edges: [],
       draggingNode: null,
       showPopup: false,
+      popupMode: "add", // "add" a new point, or "edit" an existing box
+      popupError: "",
+      editingNode: null,
       newNode: { type: "", text: "", color: "", parent: null },
       // All color settings (9 total)
       canvasColor: "#000000", // Canvas background color
@@ -361,7 +369,12 @@ export default {
     },
 
     handleGuideKeydown(event) {
-      if (this.showGuide && event.key === 'Escape') {
+      if (event.key !== 'Escape') {
+        return;
+      }
+      if (this.showPopup) {
+        this.closePopup();
+      } else if (this.showGuide) {
         this.closeGuide();
       }
     },
@@ -662,9 +675,13 @@ export default {
     },
 
     getPopupLabel(type) {
+      if (this.popupMode === 'edit') {
+        return 'Edit text';
+      }
+
       // Get parent node text
       const parentText = this.newNode.parent ? this.newNode.parent.text : '';
-      
+
       switch(type) {
         case 'pro':
           return `Supporting: "${parentText}"`;
@@ -678,6 +695,9 @@ export default {
     },
 
     openPopup(type, parentNode) {
+      this.popupMode = "add";
+      this.editingNode = null;
+      this.popupError = "";
       this.newNode = {
         type,
         text: "",
@@ -685,26 +705,61 @@ export default {
         parent: parentNode
       };
       this.showPopup = true;
+      this.focusPopupInput();
+    },
 
+    focusPopupInput(selectText = false) {
+      // Focus the textbox after the popup is rendered
       this.$nextTick(() => {
-        this.$refs.newNodeInput.focus(); // Focus on the textbox after the popup is rendered
+        const input = this.$refs.newNodeInput;
+        if (input) {
+          input.focus();
+          if (selectText) {
+            input.select();
+          }
+        }
       });
     },
 
     closePopup() {
-      this.showPopup = false;
-      // Reset the newNode data
-      this.newNode = { type: "", text: "", color: "", parent: null };
-      
-      // Remove focus from any active input
+      // Remove focus from the input before it is removed
       if (this.$refs.newNodeInput) {
         this.$refs.newNodeInput.blur();
       }
+
+      this.showPopup = false;
+      this.popupMode = "add";
+      this.popupError = "";
+      this.editingNode = null;
+      // Reset the newNode data
+      this.newNode = { type: "", text: "", color: "", parent: null };
+    },
+
+    submitPopup() {
+      if (this.popupMode === 'edit') {
+        this.saveNodeText();
+      } else {
+        this.addChildNode();
+      }
+    },
+
+    saveNodeText() {
+      const text = this.newNode.text.trim();
+      if (!text) {
+        this.popupError = "The text cannot be empty.";
+        this.focusPopupInput();
+        return;
+      }
+      if (this.editingNode) {
+        this.editingNode.text = text;
+      }
+      this.closePopup();
     },
 
     addChildNode() {
       if (!this.newNode.text.trim()) {
-        alert("Please enter a statement.");
+        this.popupError = "Please write your point before you add it.";
+        this.focusPopupInput();
         return;
       }
 
@@ -733,8 +788,7 @@ export default {
         color: this.nodeColors[this.newNode.type]
       });
 
-      // Close the popup
-      this.showPopup = false;
+      this.closePopup();
     },
 
     getNodeById(id) {
@@ -755,10 +809,12 @@ export default {
     },
 
     editNodeText(node) {
-      const newText = prompt("Edit Node Text:", node.text);
-      if (newText !== null && newText.trim() !== "") {
-        node.text = newText.trim();
-      }
+      this.popupMode = "edit";
+      this.editingNode = node;
+      this.popupError = "";
+      this.newNode = { type: node.type || "resolution", text: node.text, color: "", parent: null };
+      this.showPopup = true;
+      this.focusPopupInput(true);
     }
   }
 };
@@ -860,18 +916,40 @@ export default {
   transition: stroke 0.3s ease;
 }
 
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 150;
+}
+
 .popup {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
   background: white;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  color: black;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  color: #1f2937;
+  text-align: left;
+  font-weight: 600;
+}
+
+.popup-error {
+  min-height: 1.2em;
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.popup input[aria-invalid="true"] {
+  border-color: #b91c1c;
 }
 
 button {
