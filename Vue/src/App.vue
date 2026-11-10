@@ -121,6 +121,7 @@
           :key="`edge-${index}-${refreshTrigger}`"
           :d="calculatePath(edge.source, edge.target)"
           :stroke="edge.color"
+          :class="{ 'will-delete': isPendingDelete(edge.target) }"
           fill="transparent"
           stroke-width="2"
         />
@@ -129,6 +130,7 @@
       <!-- Main Resolution Node -->
       <div
         class="node resolution-node"
+        :class="{ 'drop-target': pendingDelete && pendingDelete.parentId === resolutionNode.id }"
         :style="{ 
           top: resolutionNode.position.y + 'px', 
           left: resolutionNode.position.x + 'px',
@@ -159,7 +161,11 @@
       <div
         v-for="(node, index) in childNodes"
         :key="node.id"
-        :class="`node ${node.type}`"
+        :class="[`node ${node.type}`, {
+          dragging: draggingNode === node,
+          'will-delete': isPendingDelete(node.id),
+          'drop-target': pendingDelete && pendingDelete.parentId === node.id
+        }]"
         :style="{ 
           top: node.position.y + 'px', 
           left: node.position.x + 'px',
@@ -185,6 +191,17 @@
           >{{ action.emoji }}</button>
         </div>
       </div>
+
+      <!-- Shown while a dragged box is over its parent and will be removed -->
+      <p
+        v-if="pendingDelete && draggingNode"
+        class="delete-badge"
+        role="status"
+        :style="{
+          top: draggingNode.position.y - 34 + 'px',
+          left: draggingNode.position.x + nodeWidth / 2 + 'px'
+        }"
+      >{{ pendingDeleteMessage }}</p>
 
       <!-- First-step hint, shown until the first point is added -->
       <p
@@ -241,6 +258,8 @@ export default {
       childNodes: [],
       edges: [],
       draggingNode: null,
+      // Set while a dragged box overlaps its parent: { nodeId, parentId, ids }
+      pendingDelete: null,
       showPopup: false,
       popupMode: "add", // "add" a new point, or "edit" an existing box
       popupError: "",
@@ -300,6 +319,16 @@ export default {
     };
   },
   computed: {
+    pendingDeleteMessage() {
+      if (!this.pendingDelete) {
+        return '';
+      }
+      const subPoints = this.pendingDelete.ids.length - 1;
+      if (subPoints === 0) {
+        return 'Release to remove this point';
+      }
+      return `Release to remove this point and its ${subPoints} sub-point${subPoints === 1 ? '' : 's'}`;
+    },
     // Hint text colour that stays readable on the current canvas colour
     hintColor() {
       const luminance = this.getLuminance(this.canvasColor);
@@ -588,33 +617,54 @@ export default {
           x: nodeStartX + dx,
           y: nodeStartY + dy
         };
+
+        this.updatePendingDelete(node);
       };
 
       const upHandler = () => {
         document.removeEventListener('mousemove', moveHandler);
         document.removeEventListener('mouseup', upHandler);
         
-        // Check if the child node has been dragged into its parent
-        if (this.draggingNode && this.draggingNode.id !== "resolution") {
-          // Find the parent node for this child
-          const parentEdge = this.edges.find(e => e.target === this.draggingNode.id);
-          
-          if (parentEdge) {
-            const parentNode = this.getNodeById(parentEdge.source);
-            
-            // Check if the child overlaps with its parent
-            if (this.nodesOverlap(this.draggingNode, parentNode)) {
-              // Delete the child node and its connecting edge
-              this.deleteChildNode(this.draggingNode.id);
-            }
-          }
+        // A child released over its parent is removed, with its sub-points
+        if (this.draggingNode) {
+          this.updatePendingDelete(this.draggingNode);
         }
-        
+        if (this.pendingDelete) {
+          this.deleteChildNode(this.pendingDelete.nodeId);
+        }
+
+        this.pendingDelete = null;
         this.draggingNode = null;
       };
 
       document.addEventListener('mousemove', moveHandler);
       document.addEventListener('mouseup', upHandler);
+    },
+
+    // Work out whether releasing the dragged node now would remove it
+    updatePendingDelete(node) {
+      let pending = null;
+      if (node.id !== "resolution") {
+        const parentEdge = this.edges.find(e => e.target === node.id);
+        const parentNode = parentEdge ? this.getNodeById(parentEdge.source) : null;
+        if (parentNode && this.nodesOverlap(node, parentNode)) {
+          pending = {
+            nodeId: node.id,
+            parentId: parentNode.id,
+            ids: [node.id, ...this.findAllDescendants(node.id)]
+          };
+        }
+      }
+      // Only replace the object when the result changes, to avoid extra renders
+      const changed = (pending && pending.parentId) !== (this.pendingDelete && this.pendingDelete.parentId)
+        || (pending && pending.nodeId) !== (this.pendingDelete && this.pendingDelete.nodeId);
+      if (changed) {
+        this.pendingDelete = pending;
+      }
+    },
+
+    isPendingDelete(id) {
+      return !!this.pendingDelete && this.pendingDelete.ids.includes(id);
     },
 
     nodesOverlap(node1, node2) {
@@ -852,6 +902,45 @@ export default {
 
 .resolution-node {
   font-weight: bold;
+}
+
+.node.dragging {
+  cursor: grabbing;
+  z-index: 3;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* Drag-to-remove feedback */
+.node.will-delete {
+  opacity: 0.55;
+  outline: 2px dashed #ef4444;
+  outline-offset: 2px;
+}
+
+.node.drop-target {
+  outline: 3px solid #ef4444;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(239, 68, 68, 0.3);
+}
+
+.lines path.will-delete {
+  opacity: 0.35;
+  stroke-dasharray: 6 4;
+}
+
+.delete-badge {
+  position: absolute;
+  margin: 0;
+  padding: 4px 10px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background-color: #b91c1c;
+  color: white;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 4;
 }
 
 .emoji-menu {
