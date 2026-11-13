@@ -19,10 +19,6 @@ test.describe('Can add arguments', () => {
     await page.getByRole('textbox', { name: 'Your resolution' }).press('Enter');
   });
 
-  test.afterAll(({ browser }) => {
-    browser.close();
-  });
-
   test('should add a positive argument', async ({ page }) => {
     await page.getByText(RESOLUTION).hover();
     await page.getByText('👍').click();

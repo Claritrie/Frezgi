@@ -1,0 +1,40 @@
+# Runs the tests on every pull request and on every change to main.
+# The steps are plain npm commands, so any other CI service can run them too.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # A fixed version keeps runs reproducible; Playwright 1.52 does not support newer Ubuntu releases
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: Vue
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Vue/package-lock.json
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # Playwright starts the dev server by itself (see playwright.config.ts)
+      - run: npx playwright test --project=chromium
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: Vue/test-results
+          retention-days: 7
