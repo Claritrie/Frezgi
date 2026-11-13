@@ -25,3 +25,25 @@ test('hint follows the rendered resolution height, including its hover menu', as
     }).toBeGreaterThanOrEqual(16);
   }
 });
+
+for (const width of [1280, 375]) {
+  test(`action tooltips stay above the hint at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    const node = page.locator('.resolution-node');
+    await node.hover();
+    for (const label of ['Add a supporting reason', 'Add an opposing reason', 'Add a point to explore']) {
+      const button = page.getByRole('button', { name: label });
+      await button.hover();
+      await expect.poll(async () => {
+        const bottom = await button.evaluate(element => {
+          const tip = getComputedStyle(element, '::after');
+          const scale = element.getBoundingClientRect().height / element.offsetHeight;
+          return element.getBoundingClientRect().top +
+            (parseFloat(tip.top) + parseFloat(tip.lineHeight) +
+             parseFloat(tip.paddingTop) + parseFloat(tip.paddingBottom)) * scale;
+        });
+        return (await page.locator('.empty-hint').boundingBox())!.y - bottom;
+      }).toBeGreaterThanOrEqual(8);
+    }
+  });
+}

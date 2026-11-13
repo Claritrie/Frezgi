@@ -47,8 +47,9 @@ const lines = computed(() => props.map.links.map(link => {
 
 const resolution = computed(() => props.map.resolution);
 
+// Leave room for the action tooltips below the expanded resolution.
 const hintStyle = computed(() => ({
-  top: resolution.value.position.y + (nodeHeights.value[resolution.value.id] ?? 104) + 16 + 'px',
+  top: resolution.value.position.y + (nodeHeights.value[resolution.value.id] ?? 104) + (props.map.resolutionIsSet ? 48 : 16) + 'px',
   left: resolution.value.position.x - 55 + 'px',
   color: isLightColor(colors.canvasColor) ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)',
 }));
