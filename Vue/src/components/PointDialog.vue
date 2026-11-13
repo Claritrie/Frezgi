@@ -75,9 +75,9 @@ onMounted(() => {
 
 <template>
   <div class="popup-backdrop" @mousedown.self="emit('cancel')">
-    <div class="popup" role="dialog" aria-modal="true">
+    <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popup-label">
       <label>
-        {{ label }}
+        <span id="popup-label">{{ label }}</span>
         <input
           ref="input"
           v-model="text"
@@ -103,6 +103,7 @@ onMounted(() => {
 .popup-backdrop {
   position: fixed;
   inset: 0;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,6 +115,10 @@ onMounted(() => {
 .popup {
   width: 100%;
   max-width: 420px;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
   box-sizing: border-box;
   padding: 20px 24px;
   border-radius: 12px;
@@ -164,7 +169,8 @@ input[aria-invalid="true"] {
 .popup-buttons {
   display: flex;
   justify-content: center;
-  gap: 22px;
+  gap: 12px;
+  flex-wrap: wrap;
   margin: 25px 0 5px;
 }
 </style>

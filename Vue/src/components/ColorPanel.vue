@@ -45,7 +45,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="color-settings-panel" :class="{ hidden: !isOpen }" :style="{ width: PANEL_WIDTH + 'px' }">
+  <div class="color-settings-panel" :class="{ hidden: !isOpen }" :inert="!isOpen" id="color-settings" :style="{ width: PANEL_WIDTH + 'px' }">
     <div class="panel-logo">
       <div class="panel-brand">
         <img src="https://imgur.com/dlnsBR8.png" alt="Frezgi Logo" class="company-logo">
@@ -70,6 +70,7 @@ onBeforeUnmount(() => {
               type="color"
               class="color-input"
               :title="`${info.panelLabel} background`"
+              :aria-label="`${info.panelLabel} background`"
               @change="colors.ensureReadableText(type)"
             />
             <input
@@ -78,6 +79,7 @@ onBeforeUnmount(() => {
               type="color"
               class="color-input"
               :title="`${info.panelLabel} text`"
+              :aria-label="`${info.panelLabel} text`"
               @change="colors.ensureReadableText(type)"
             />
           </div>
@@ -95,12 +97,15 @@ onBeforeUnmount(() => {
     :class="{ 'panel-open': isOpen }"
     :style="{ left: isOpen ? PANEL_WIDTH + 'px' : 0 }"
     :aria-label="isOpen ? 'Close the colour panel' : 'Open the colour panel'"
+    :aria-expanded="isOpen"
+    aria-controls="color-settings"
     @click="toggle"
   >{{ isOpen ? '◀' : '▶' }}</button>
 </template>
 
 <style scoped>
 .color-settings-panel {
+  box-sizing: border-box;
   position: fixed;
   top: 0;
   left: 0;
@@ -190,14 +195,38 @@ onBeforeUnmount(() => {
 }
 
 .color-input {
-  width: 26px;
-  height: 26px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 32px;
+  height: 32px;
+  flex: none;
   margin: 10px 0;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: none;
   border-radius: 6px;
   background: none;
   cursor: pointer;
+}
+
+/* Reset the native inset border as well as the input's outer border. */
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.color-input::-moz-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.color-input:focus-visible,
+.toggle-panel-btn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
 }
 
 .reset-btn {
