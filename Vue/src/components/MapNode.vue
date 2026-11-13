@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { NODE_TYPES, NODE_WIDTH, POINT_TYPES } from '../constants.js';
 import { useColorScheme } from '../composables/useColorScheme.js';
 
@@ -17,7 +17,14 @@ const props = defineProps({
   dropTarget: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['drag-start', 'hover', 'edit', 'add']);
+const emit = defineEmits(['drag-start', 'hover', 'edit', 'add', 'resize']);
+const element = ref(null);
+let observer;
+onMounted(() => {
+  observer = new ResizeObserver(() => emit('resize', element.value.offsetHeight));
+  observer.observe(element.value);
+});
+onBeforeUnmount(() => observer?.disconnect());
 
 const colors = useColorScheme();
 const isResolution = computed(() => props.node.type === 'resolution');
@@ -31,6 +38,7 @@ const actions = POINT_TYPES.map(type => ({
 
 <template>
   <div
+    ref="element"
     class="node"
     :class="[isResolution ? 'resolution-node' : node.type, { dragging, 'will-delete': willDelete, 'drop-target': dropTarget }]"
     :data-node-id="node.id"

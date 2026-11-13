@@ -21,11 +21,12 @@ const emit = defineEmits(['edit', 'add']);
 const colors = useColorScheme();
 const root = ref(null);
 const draggingNode = ref(null);
+const nodeHeights = ref({});
 // Set while a dragged box is over its parent: { nodeId, parentId, ids }
 const pendingDelete = ref(null);
 
 // Box of a node as used for links and overlap; the menu makes it taller
-function box(node, height = node.showMenu ? NODE_MENU_HEIGHT : NODE_BASE_HEIGHT) {
+function box(node, height = nodeHeights.value[node.id] ?? (node.showMenu ? NODE_MENU_HEIGHT : NODE_BASE_HEIGHT)) {
   return {
     left: node.position.x,
     top: node.position.y,
@@ -47,7 +48,7 @@ const lines = computed(() => props.map.links.map(link => {
 const resolution = computed(() => props.map.resolution);
 
 const hintStyle = computed(() => ({
-  top: resolution.value.position.y + (props.map.resolutionIsSet ? NODE_MENU_HEIGHT : 104) + 16 + 'px',
+  top: resolution.value.position.y + (nodeHeights.value[resolution.value.id] ?? 104) + 16 + 'px',
   left: resolution.value.position.x - 55 + 'px',
   color: isLightColor(colors.canvasColor) ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)',
 }));
@@ -153,6 +154,7 @@ defineExpose({ findFreePosition });
       :drop-target="!!pendingDelete && pendingDelete.parentId === node.id"
       @drag-start="startDrag($event, node)"
       @hover="visible => map.setMenuVisible(node, visible)"
+      @resize="height => nodeHeights[node.id] = height"
       @edit="emit('edit', node)"
       @add="type => emit('add', { type, parent: node })"
     />
