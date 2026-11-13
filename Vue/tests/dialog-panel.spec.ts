@@ -21,3 +21,25 @@ for (const width of [1280, 320]) {
     await expect(dialog).toHaveCount(0);
   });
 }
+
+
+test('colour panel toggle aligns with its edge and closed controls cannot receive focus', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('guide-seen', 'true'));
+  await page.goto('/');
+  const toggle = page.locator('.toggle-panel-btn');
+  const panel = page.locator('#color-settings');
+  await expect(panel).toHaveAttribute('inert', '');
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(panel).not.toHaveAttribute('inert');
+  await expect.poll(async () => {
+    const edge = (await panel.boundingBox())!;
+    return Math.abs((await toggle.boundingBox())!.x - (edge.x + edge.width) - 5);
+  }).toBeLessThan(1);
+  const swatch = page.getByLabel('Supporting background', { exact: true });
+  await swatch.fill('#123456');
+  await expect(swatch).toHaveValue('#123456');
+  await page.getByRole('button', { name: 'Reset Colors' }).click();
+  await expect(swatch).toHaveValue('#33845b');
+});
