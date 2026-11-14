@@ -43,22 +43,13 @@ async function exportPng() {
 
 <style scoped>
 .trie-actions {
-  position: fixed;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: calc(100% - 32px);
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #1f2937;
-  color: white;
-  box-shadow: 0 2px 10px #0005;
-  z-index: 90;
+  margin: 0 0 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid #ffffff1a;
+  color: #e5e7eb;
   font-size: 12px;
 }
-.controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.controls { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
 button { padding: 7px 10px; border: 1px solid #94a3b8; border-radius: 6px; background: #374151; color: white; cursor: pointer; font: inherit; }
 button:hover { background: #4b5563; }
 button:focus-visible, input:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }

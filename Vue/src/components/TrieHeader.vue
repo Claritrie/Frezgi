@@ -5,8 +5,8 @@ defineProps({ title: { type: String, default: '' } });
 <template>
   <header class="trie-header">
     <div class="brand">
-      <img src="/favicon.ico" width="32" height="32" alt="" />
-      <span>Frezgi<small>frezgi.com</small></span>
+      <img src="/frezgi-logo.png" width="120" height="34" alt="Frezgi" />
+      <small>frezgi.com</small>
     </div>
     <p :title="title">{{ title || 'Untitled trie' }}</p>
   </header>
@@ -19,7 +19,7 @@ defineProps({ title: { type: String, default: '' } });
   left: 32px;
   max-width: min(320px, calc(100vw - 100px));
   box-sizing: border-box;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid #ffffff1a;
   border-radius: 12px;
   background: #171c26f2;
@@ -29,8 +29,8 @@ defineProps({ title: { type: String, default: '' } });
   pointer-events: none;
   z-index: 80;
 }
-.brand { display: flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 700; line-height: 1.15; }
-img { border-radius: 7px; }
+.brand { display: flex; flex-direction: column; align-items: flex-start; }
+img { display: block; max-width: 100%; height: auto; }
 small { display: block; margin-top: 2px; color: #cbd5e1; font-size: 10px; font-weight: 400; letter-spacing: .03em; }
-p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 9px 0 0; font-size: 12px; color: #cbd5e1; }
+p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 6px 0 0; font-size: 12px; color: #cbd5e1; }
 </style>

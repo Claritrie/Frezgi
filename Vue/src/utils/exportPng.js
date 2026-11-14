@@ -5,7 +5,7 @@ import { linkPath } from './layout.js';
 export async function exportTriePng(map, colors, background) {
   await document.fonts.ready;
   const logo = new Image();
-  logo.src = '/favicon.ico';
+  logo.src = '/frezgi-logo.png';
   await logo.decode();
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -79,23 +79,22 @@ export async function exportTriePng(map, colors, background) {
     ctx.textBaseline = 'middle';
     node.lines.forEach((line, i) => ctx.fillText(line, node.left + NODE_WIDTH / 2, node.top + 12 + (i + 0.5) * node.size * 1.35));
   }
-  // A small brand signature sits in the reserved bottom margin, including
-  // on transparent exports. Its own dark panel keeps it legible everywhere.
-  const brandX = left + padding;
-  const brandY = top + height - 72;
+  // Keep the wordmark in the reserved top-left margin, above all trie nodes.
+  // Its backing makes the same logo legible on transparent and opaque PNGs.
+  const brandX = left + 24;
+  const brandY = top + 24;
   ctx.beginPath();
-  ctx.roundRect(brandX, brandY, 174, 48, 10);
+  ctx.roundRect(brandX, brandY, 210, 64, 10);
   ctx.fillStyle = '#171c26';
   ctx.fill();
-  ctx.drawImage(logo, brandX + 9, brandY + 8, 32, 32);
+  const logoWidth = 180;
+  const logoHeight = logoWidth * logo.naturalHeight / logo.naturalWidth;
+  ctx.drawImage(logo, brandX + 15, brandY + 7, logoWidth, logoHeight);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#f4f1ea';
-  ctx.font = `700 18px ${fontFamily}`;
-  ctx.fillText('Frezgi', brandX + 50, brandY + 23);
   ctx.fillStyle = '#cbd5e1';
   ctx.font = `11px ${fontFamily}`;
-  ctx.fillText('frezgi.com', brandX + 50, brandY + 38);
+  ctx.fillText('frezgi.com', brandX + 15, brandY + 55);
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Unable to create the PNG. Try a smaller trie.');
