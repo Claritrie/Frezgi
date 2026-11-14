@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const stored = {
   version: 1,
@@ -32,6 +32,7 @@ test('restores content, links and geometry; edits survive reload; new trie can b
   await page.reload();
   await expect(resolution).toContainText('An edited resolution');
   await openPanel(page);
+  await expect(page.locator('.trie-title')).toHaveText('An edited resolution');
   page.once('dialog', dialog => dialog.dismiss());
   await page.getByRole('button', { name: 'New trie' }).click();
   await expect(resolution).toContainText('An edited resolution');
@@ -55,6 +56,7 @@ test('exports the entire trie with opaque or transparent background', async ({ p
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('A saved resolution.png');
     const bytes = await readFile((await download.path())!);
+    await writeFile(`/tmp/frezgi-export-${background ? "background" : "transparent"}.png`, bytes);
     const pixels = await page.evaluate(async base64 => {
       const image = new Image();
       image.src = `data:image/png;base64,${base64}`;
@@ -105,18 +107,22 @@ test('storage failure is visible while editing remains usable', async ({ page })
 });
 
 for (const width of [320, 1280]) {
-  test(`brand and trie title fit in screenshots at ${width}px`, async ({ page }) => {
+  test(`resolution title sits between panel branding and actions at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
-    const header = page.locator('.trie-header');
-    await expect(header.getByRole('img', { name: 'Frezgi', exact: true })).toBeVisible();
-    await expect(header).toContainText('Untitled trie');
-    await expect(header.locator('img')).toHaveJSProperty('complete', true);
-    const bounds = (await header.boundingBox())!;
-    expect(bounds.x).toBeGreaterThanOrEqual(0);
-    expect(bounds.y + bounds.height).toBeLessThan(100);
-    expect(bounds.x + bounds.width).toBeLessThan(width - 40);
-    await page.screenshot({ path: `/tmp/frezgi-brand-${width}.png` });
+    await expect(page.locator('.trie-header')).toHaveCount(0);
+    await openPanel(page);
+    const panel = page.locator('#color-settings');
+    const title = panel.getByRole('heading', { name: 'Untitled trie' });
+    await expect(title).toBeVisible();
+    const logo = panel.getByRole('img', { name: 'Frezgi Logo' });
+    await expect(logo).toHaveJSProperty('complete', true);
+    const branding = (await panel.locator('.panel-logo').boundingBox())!;
+    const bounds = (await title.boundingBox())!;
+    const actions = (await panel.locator('.trie-actions').boundingBox())!;
+    expect(bounds.y).toBeGreaterThanOrEqual(branding.y + branding.height);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(actions.y);
+    await page.screenshot({ path: `/tmp/frezgi-panel-${width}.png` });
   });
 }
 

@@ -5,7 +5,6 @@ import ColorPanel from './components/ColorPanel.vue';
 import MapCanvas from './components/MapCanvas.vue';
 import MapKey from './components/MapKey.vue';
 import PointDialog from './components/PointDialog.vue';
-import TrieHeader from './components/TrieHeader.vue';
 import WelcomeGuide from './components/WelcomeGuide.vue';
 import { NODE_WIDTH, STORAGE_KEYS } from './constants.js';
 import { useArgumentMap } from './composables/useArgumentMap.js';
@@ -108,7 +107,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleKeydown));
 
 <template>
   <div class="app">
-    <TrieHeader :title="map.resolutionIsSet ? map.resolution.text : ''" />
     <ColorPanel :map="map" />
 
     <button
