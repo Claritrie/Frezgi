@@ -2,7 +2,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { NODE_TYPES } from '../constants.js';
 import { useColorScheme } from '../composables/useColorScheme.js';
+import TrieActions from './TrieActions.vue';
 import { version } from '../../package.json';
+
+defineProps({ map: { type: Object, required: true } });
 
 const colors = useColorScheme();
 
@@ -26,6 +29,10 @@ function handleMouseMove(event) {
     clearHideTimer();
   } else if (isOpen.value && event.clientX > CLOSE_DISTANCE && !hideTimer) {
     hideTimer = setTimeout(() => {
+      if (document.activeElement?.closest('#color-settings')) {
+        hideTimer = null;
+        return;
+      }
       isOpen.value = false;
       hideTimer = null;
     }, 100);
@@ -48,10 +55,12 @@ onBeforeUnmount(() => {
   <div class="color-settings-panel" :class="{ hidden: !isOpen }" :inert="!isOpen" id="color-settings" :style="{ width: PANEL_WIDTH + 'px' }">
     <div class="panel-logo">
       <div class="panel-brand">
-        <img src="https://imgur.com/dlnsBR8.png" alt="Frezgi Logo" class="company-logo">
+        <img src="/frezgi-logo.png" alt="Frezgi Logo" class="company-logo">
         <span class="panel-byline">by Claritrie</span>
       </div>
     </div>
+
+    <TrieActions :map="map" />
 
     <div class="color-picker-container">
       <div class="color-picker-row">
@@ -159,7 +168,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex-grow: 1;
+  flex-shrink: 0;
   margin: 5px 0;
   overflow-y: auto;
 }

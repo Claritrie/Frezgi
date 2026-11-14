@@ -89,8 +89,4 @@ li {
   margin-bottom: 4px;
   line-height: 1.4;
 }
-/* Leave the bottom toolbar clear when there is no room beside it. */
-@media (max-width: 1000px) {
-  .legend { bottom: 128px; }
-}
 </style>

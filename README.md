@@ -65,8 +65,8 @@ Visit **[frezgi.com](https://frezgi.com)** to start using Frezgi immediately.
 5. **Drag to organize** - Click and drag nodes to arrange your argument trie
 6. **Customize colors** - Use the color panel (hover left edge) to personalize
 7. **Keep your trie** - Changes save automatically in this browser on this device
-8. **Export PNG** - Download the entire trie, including off-screen points; uncheck **Include background** for transparency
-9. **Start fresh** - Choose **New trie** to replace the current trie after confirmation. PNGs preserve an image, not an editable backup.
+8. **Export PNG** - Open the left panel to download the entire trie, including off-screen points; uncheck **Include background** for transparency
+9. **Start fresh** - In the left panel, choose **New trie** to replace the current trie after confirmation. PNGs preserve an image, not an editable backup.
 
 ## 🏗️ Project Structure
 

@@ -8,6 +8,12 @@ const stored = {
   links: [{ source: 'resolution', target: 'point-7' }],
 };
 
+async function openPanel(page) {
+  await page.mouse.move(2, 200);
+  await expect(page.locator('.toggle-panel-btn')).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('.trie-actions').hover();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('guide-seen', 'true'));
 });
@@ -25,6 +31,7 @@ test('restores content, links and geometry; edits survive reload; new trie can b
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await page.reload();
   await expect(resolution).toContainText('An edited resolution');
+  await openPanel(page);
   page.once('dialog', dialog => dialog.dismiss());
   await page.getByRole('button', { name: 'New trie' }).click();
   await expect(resolution).toContainText('An edited resolution');
@@ -40,6 +47,7 @@ test('exports the entire trie with opaque or transparent background', async ({ p
   await page.goto('/');
   await page.evaluate(data => localStorage.setItem('frezgi-trie-v1', JSON.stringify(data)), stored);
   await page.reload();
+  await openPanel(page);
   for (const background of [true, false]) {
     await page.getByRole('checkbox', { name: 'Include background' }).setChecked(background);
     const downloadPromise = page.waitForEvent('download');
@@ -57,7 +65,7 @@ test('exports the entire trie with opaque or transparent background', async ({ p
       ctx.drawImage(image, 0, 0);
       return { width: image.width, height: image.height,
         // Branding is present even when the rest of the background is transparent.
-        brand: Array.from(ctx.getImageData(230, image.height - 130, 1, 1).data),
+        brand: Array.from(ctx.getImageData(60, 100, 1, 1).data),
         alpha: ctx.getImageData(0, 0, 1, 1).data[3],
         // The off-screen supporting point must be drawn at its translated position.
         point: Array.from(ctx.getImageData(374, 2800, 1, 1).data) };
@@ -88,6 +96,7 @@ test('storage failure is visible while editing remains usable', async ({ page })
     };
   });
   await page.goto('/');
+  await openPanel(page);
   await expect(page.getByRole('status')).toContainText('Unable to save');
   await page.getByRole('button', { name: 'Write your resolution' }).click();
   await page.getByRole('textbox', { name: 'Your resolution' }).fill('Still editable');
@@ -100,12 +109,34 @@ for (const width of [320, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
     const header = page.locator('.trie-header');
-    await expect(header).toContainText('Frezgi');
+    await expect(header.getByRole('img', { name: 'Frezgi', exact: true })).toBeVisible();
     await expect(header).toContainText('Untitled trie');
     await expect(header.locator('img')).toHaveJSProperty('complete', true);
     const bounds = (await header.boundingBox())!;
     expect(bounds.x).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThan(100);
     expect(bounds.x + bounds.width).toBeLessThan(width - 40);
     await page.screenshot({ path: `/tmp/frezgi-brand-${width}.png` });
   });
 }
+
+test('trie controls share the panel and hide when it closes', async ({ page }) => {
+  await page.goto('/');
+  const panel = page.locator('#color-settings');
+  await expect(panel).toHaveAttribute('inert', '');
+  await expect.poll(async () => {
+    const box = (await panel.boundingBox())!;
+    return box.x + box.width;
+  }).toBeLessThanOrEqual(0);
+  await openPanel(page);
+  await expect(panel.getByRole('button', { name: 'New trie' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Export PNG' })).toBeVisible();
+  await expect(panel.getByLabel('Include background')).toBeChecked();
+  await page.locator('.toggle-panel-btn').click();
+  await expect(panel).toHaveAttribute('inert', '');
+  // Hovering the left edge reveals both trie actions and colour settings.
+  await page.mouse.move(2, 200);
+  await expect(panel).not.toHaveAttribute('inert', '');
+  await page.mouse.move(600, 300);
+  await expect(panel).toHaveAttribute('inert', '');
+});
