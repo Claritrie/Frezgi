@@ -1,5 +1,7 @@
-import { computed, reactive, ref } from 'vue';
-import { DEFAULT_RESOLUTION_TEXT, RESOLUTION_ID } from '../constants.js';
+import { computed, reactive, ref, watch } from 'vue';
+import { DEFAULT_RESOLUTION_TEXT, RESOLUTION_ID, STORAGE_KEYS, NODE_WIDTH } from '../constants.js';
+
+import { restoreTrie, trieSnapshot } from '../utils/trieStorage.js';
 
 // The argument map: one resolution, the points added to it, and the links
 // from each point to the point it answers.
@@ -80,8 +82,44 @@ export function useArgumentMap() {
     node.showMenu = visible;
   }
 
+  const saveStatus = ref('');
+  const restored = restoreTrie();
+  if (restored) {
+    Object.assign(resolution, restored.resolution);
+    points.value = restored.points;
+    links.value = restored.links;
+    nextId = restored.nextId;
+  }
+
+  function snapshot() {
+    return trieSnapshot(resolution, points.value, links.value);
+  }
+
+  watch(snapshot, value => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.trie, JSON.stringify(value));
+      saveStatus.value = 'Saved on this device';
+    } catch {
+      saveStatus.value = 'Unable to save on this device. Export a PNG to keep a copy.';
+    }
+  }, { deep: true, flush: 'sync' });
+
+  function newTrie() {
+    points.value = [];
+    links.value = [];
+    nextId = 1;
+    Object.assign(resolution, {
+      text: DEFAULT_RESOLUTION_TEXT,
+      position: { x: Math.max(16, Math.round((window.innerWidth - NODE_WIDTH) / 2)), y: 100 },
+      showMenu: false,
+    });
+  }
+
   // reactive() unwraps the refs, so that components can read them directly
   return reactive({
+    restored: !!restored,
+    saveStatus,
+    newTrie,
     resolution,
     points,
     links,

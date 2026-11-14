@@ -20,7 +20,7 @@ test.describe('Can add arguments', () => {
   });
 
   test('should add a positive argument', async ({ page }) => {
-    await page.getByText(RESOLUTION).hover();
+    await page.locator('.resolution-node').hover();
     await page.getByText('👍').click();
     await page.getByRole('textbox', { name: `Supporting: "${RESOLUTION}"` }).fill('This is a really good point, couldn\'t agree more');
     await page.getByRole('textbox', { name: `Supporting: "${RESOLUTION}"` }).press('Enter');
@@ -29,7 +29,7 @@ test.describe('Can add arguments', () => {
   });
 
   test('should add an exploring argument', async ({ page }) => {
-    await page.getByText(RESOLUTION).hover();
+    await page.locator('.resolution-node').hover();
     await page.getByText('✋').click();
     await page.getByRole('textbox', { name: `Exploring: "${RESOLUTION}"` }).fill('This certainly needs to be discussed further');
     await page.getByRole('textbox', { name: `Exploring: "${RESOLUTION}"` }).press('Enter');
@@ -38,7 +38,7 @@ test.describe('Can add arguments', () => {
   });
 
   test('should add a negative argument', async ({page}) => {
-    await page.getByText(RESOLUTION).hover();
+    await page.locator('.resolution-node').hover();
     await page.getByText('👎').click();
     await page.getByRole('textbox', { name: `Opposing: "${RESOLUTION}"` }).fill('I can\'t believe you would say something so atrocious');
     await page.getByRole('textbox', { name: `Opposing: "${RESOLUTION}"` }).press('Enter');

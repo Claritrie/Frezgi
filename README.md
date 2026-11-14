@@ -64,6 +64,9 @@ Visit **[frezgi.com](https://frezgi.com)** to start using Frezgi immediately.
 4. **Explore alternatives** - Hover over any node and click ✋
 5. **Drag to organize** - Click and drag nodes to arrange your argument trie
 6. **Customize colors** - Use the color panel (hover left edge) to personalize
+7. **Keep your trie** - Changes save automatically in this browser on this device
+8. **Export PNG** - Download the entire trie, including off-screen points; uncheck **Include background** for transparency
+9. **Start fresh** - Choose **New trie** to replace the current trie after confirmation. PNGs preserve an image, not an editable backup.
 
 ## 🏗️ Project Structure
 
@@ -111,12 +114,13 @@ We welcome contributions from developers of all skill levels! Whether you're fix
 
 ## 📋 Roadmap
 
-- [ ] Export to PNG
+- [x] Export the full trie to PNG, with canvas background or transparency
 - [ ] Export to JSON/TRIE (rename as .trie file)
 - [ ] Import from JSON/TRIE
 - [ ] Toggling/Draggable Floating Legend (Show user color-to-stance correlations)
 - [ ] Toggle stance label names per line (because/but/however or Supporting/Opposing/Exploring, none, etc...)
-- [ ] Local Storage (Preserve your arguments with browser storage)
+- [x] Automatically save and restore the current trie in local browser storage
+- [x] Start a new trie (with confirmation before replacing existing work)
 - [ ] Undo/Redo functionality
 - [ ] Offline web-app (Tauri port)
 - [ ] Responsive Design (Works seamlessly on mobile devices too)

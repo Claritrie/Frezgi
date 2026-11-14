@@ -14,13 +14,13 @@ defineEmits(['finish']);
       <p class="coach-title">Next step: test your reason</p>
       <p class="coach-text">
         Hover over your reason and choose 👎 to add the strongest objection to it.
-        In an argument map, any reason can be supported, opposed or questioned, not only the resolution.
+        In an argument trie, any reason can be supported, opposed or questioned, not only the resolution.
       </p>
     </template>
     <template v-else>
       <p class="coach-title">Well done</p>
       <p class="coach-text">
-        You have built your first argument map. Keep adding reasons, objections and questions
+        You have built your first argument trie. Keep adding reasons, objections and questions
         until you can judge the resolution fairly.
       </p>
     </template>

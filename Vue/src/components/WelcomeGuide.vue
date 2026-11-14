@@ -35,11 +35,11 @@ onMounted(focusPrimaryButton);
       <section v-if="page === 0">
         <p class="guide-intro">
           Frezgi is an argument-mapping tool. You write one statement, called the
-          resolution, and build a map of the reasons for it, the reasons against it,
-          and the questions it raises. The map helps you decide what you think, and why.
+          resolution, and build a trie of the reasons for it, the reasons against it,
+          and the questions it raises. The trie helps you decide what you think, and why.
         </p>
 
-        <h3>The parts of a map</h3>
+        <h3>The parts of a trie</h3>
         <ul class="guide-parts">
           <li>
             <span class="swatch" :style="{ backgroundColor: colors.nodeColors.resolution }"></span>
@@ -64,13 +64,13 @@ onMounted(focusPrimaryButton);
         <h3>How it differs from a comment thread</h3>
         <table class="guide-compare">
           <thead>
-            <tr><th scope="col">In a comment thread</th><th scope="col">In an argument map</th></tr>
+            <tr><th scope="col">In a comment thread</th><th scope="col">In an argument trie</th></tr>
           </thead>
           <tbody>
             <tr><td>Replies are listed in the order they were posted.</td><td>Each point is linked to the exact point it answers.</td></tr>
             <tr><td>One post often mixes several ideas.</td><td>Each box holds one claim, so it can be judged on its own.</td></tr>
             <tr><td>People reply to people.</td><td>You respond to ideas. Any reason can be supported, opposed or questioned.</td></tr>
-            <tr><td>The latest or loudest post gets the attention.</td><td>The shape of the map shows which reasons are supported and which are challenged.</td></tr>
+            <tr><td>The latest or loudest post gets the attention.</td><td>The shape of the trie shows which reasons are supported and which are challenged.</td></tr>
           </tbody>
         </table>
       </section>
@@ -87,12 +87,12 @@ onMounted(focusPrimaryButton);
         <h3>Useful to know</h3>
         <ul>
           <li>Double-click a box to edit its text.</li>
-          <li>Drag the boxes to arrange your map. To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
+          <li>Drag the boxes to arrange your trie. To remove a box, drag it onto the box it came from. Its sub-points are removed with it.</li>
           <li>Move your pointer to the left edge of the screen to change the colours.</li>
           <li>Choose <strong>?</strong> at the top right to see this guide again.</li>
         </ul>
 
-        <p class="guide-note">Note: your map is not saved when you close or reload the page.</p>
+        <p class="guide-note">Your trie saves automatically in this browser on this device. New trie replaces it; export a PNG to keep an image.</p>
       </section>
 
       <div class="guide-nav">
