@@ -84,17 +84,17 @@ export async function exportTriePng(map, colors, background) {
   const brandX = left + 24;
   const brandY = top + 24;
   ctx.beginPath();
-  ctx.roundRect(brandX, brandY, 210, 64, 10);
+  ctx.roundRect(brandX, brandY, 210, 76, 10);
   ctx.fillStyle = '#171c26';
   ctx.fill();
   const logoWidth = 180;
   const logoHeight = logoWidth * logo.naturalHeight / logo.naturalWidth;
   ctx.drawImage(logo, brandX + 15, brandY + 7, logoWidth, logoHeight);
-  ctx.textAlign = 'left';
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#cbd5e1';
   ctx.font = `11px ${fontFamily}`;
-  ctx.fillText('frezgi.com', brandX + 15, brandY + 55);
+  ctx.fillText('frezgi.com', brandX + 195, brandY + 68);
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Unable to create the PNG. Try a smaller trie.');

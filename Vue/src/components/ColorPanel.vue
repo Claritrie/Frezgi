@@ -60,6 +60,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <h2 class="trie-title">{{ map.resolutionIsSet ? map.resolution.text : 'Untitled trie' }}</h2>
     <TrieActions :map="map" />
 
     <div class="color-picker-container">
@@ -133,6 +134,16 @@ onBeforeUnmount(() => {
 
 .color-settings-panel.hidden {
   transform: translateX(-100%);
+}
+
+.trie-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+  flex-shrink: 0;
 }
 
 .panel-logo {
