@@ -5,6 +5,8 @@ import ColorPanel from './components/ColorPanel.vue';
 import MapCanvas from './components/MapCanvas.vue';
 import MapKey from './components/MapKey.vue';
 import PointDialog from './components/PointDialog.vue';
+import TrieHeader from './components/TrieHeader.vue';
+import TrieActions from './components/TrieActions.vue';
 import WelcomeGuide from './components/WelcomeGuide.vue';
 import { NODE_WIDTH, STORAGE_KEYS } from './constants.js';
 import { useArgumentMap } from './composables/useArgumentMap.js';
@@ -95,7 +97,7 @@ function handleKeydown(event) {
 
 onMounted(() => {
   // Centre the main box so that it is on screen at any width, including phones
-  map.moveNode(map.resolution, {
+  if (!map.restored) map.moveNode(map.resolution, {
     x: Math.max(16, Math.round((window.innerWidth - NODE_WIDTH) / 2)),
     y: map.resolution.position.y,
   });
@@ -107,7 +109,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleKeydown));
 
 <template>
   <div class="app">
+    <TrieHeader :title="map.resolutionIsSet ? map.resolution.text : ''" />
     <ColorPanel />
+    <TrieActions :map="map" />
 
     <button
       type="button"

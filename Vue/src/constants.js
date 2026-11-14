@@ -19,6 +19,7 @@ export const NODE_MENU_HEIGHT = 80;
 export const NARROW_SCREEN_WIDTH = 600;
 
 export const STORAGE_KEYS = {
+  trie: 'frezgi-trie-v1',
   colorScheme: 'color-scheme',
   guideSeen: 'guide-seen',
   keyCollapsed: 'legend-collapsed',
